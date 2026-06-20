@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b0d10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cockpit Muscu">
+<title>Cockpit — Programme Musculation</title>
+<style>
+  :root{
+    --bg:#0b0d10;
+    --panel:#15181d;
+    --panel-2:#1b1f25;
+    --line:#262b33;
+    --ink:#f2f3f5;
+    --ink-dim:#8b919c;
+    --ink-faint:#5a6068;
+    --accent:#ff3d2e;
+    --accent-2:#00e5a0;
+    --accent-3:#ffb627;
+    --blue:#3aa0ff;
+    --radius:10px;
+    --mono: ui-monospace, "SF Mono", "Roboto Mono", "Cascadia Mono", Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  body.light-mode{
+    --bg:#eef0f2; --panel:#ffffff; --panel-2:#f3f4f6; --line:#dde1e5;
+    --ink:#13161a; --ink-dim:#52585f; --ink-faint:#8b919c;
+  }
+  *{margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{
+    background:var(--bg); color:var(--ink); font-family:var(--sans);
+    line-height:1.5; min-height:100vh; transition:background .25s, color .25s;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .app{max-width:600px; margin:0 auto; padding:14px;}
+
+  /* ===== HEADER / COCKPIT ===== */
+  .dash{
+    background:linear-gradient(160deg, var(--panel), var(--panel-2));
+    border:1px solid var(--line); border-top:3px solid var(--accent);
+    border-radius:var(--radius); padding:18px 16px; margin-bottom:14px; position:relative; overflow:hidden;
+  }
+  .dash-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+  .dash-eyebrow{font-family:var(--mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin-bottom:4px;}
+  .dash-title{font-size:1.25rem; font-weight:800; letter-spacing:.01em; line-height:1.2;}
+  .dash-sub{font-family:var(--mono); font-size:11.5px; color:var(--ink-dim); margin-top:4px;}
+  .dash-controls{display:flex; gap:7px; flex-shrink:0;}
+  .ctrl-btn{
+    width:34px; height:34px; border-radius:7px; border:1px solid var(--line); background:var(--panel-2);
+    color:var(--ink); font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+
+  .readout-strip{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:8px; overflow:hidden; margin-top:16px;}
+  .readout{background:var(--panel); padding:9px 8px; text-align:center;}
+  .readout-label{font-family:var(--mono); font-size:9px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint);}
+  .readout-value{font-family:var(--mono); font-size:14px; font-weight:700; color:var(--ink); margin-top:2px;}
+
+  .alert-banner{
+    background:rgba(255,182,39,.08); border:1px solid rgba(255,182,39,.35); border-left:3px solid var(--accent-3);
+    border-radius:8px; padding:11px 13px; font-size:.82rem; color:var(--ink-dim); margin-bottom:14px;
+  }
+  .alert-banner strong{color:var(--accent-3);}
+
+  /* ===== RULE BOX (non-negotiable) ===== */
+  .rule-box{
+    background:rgba(255,61,46,.07); border:1px solid rgba(255,61,46,.3); border-left:3px solid var(--accent);
+    border-radius:8px; padding:14px 15px; margin-bottom:14px;
+  }
+  .rule-box .rb-tag{font-family:var(--mono); font-size:10px; letter-spacing:.1em; color:var(--accent); text-transform:uppercase; font-weight:700;}
+  .rule-box h3{font-size:.98rem; margin:5px 0 6px; color:var(--ink);}
+  .rule-box p{font-size:.85rem; color:var(--ink-dim);}
+
+  /* ===== TABS ===== */
+  .tabs{display:flex; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:4px; margin-bottom:14px;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab-btn{
+    flex-shrink:0; padding:9px 13px; background:var(--panel); border:1px solid var(--line); border-radius:7px;
+    color:var(--ink-dim); font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:.03em;
+    text-transform:uppercase; cursor:pointer; white-space:nowrap; transition:all .15s;
+  }
+  .tab-btn.active{background:var(--accent); border-color:var(--accent); color:#fff; box-shadow:0 0 0 1px var(--accent), 0 4px 10px rgba(255,61,46,.25);}
+
+  .tab-content{display:none; animation:fadeIn .3s ease;}
+  .tab-content.active{display:block;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+
+  /* ===== CARDS ===== */
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px; margin-bottom:13px;}
+  .card.c-warm{border-left:3px solid var(--accent-3);}
+  .card.c-good{border-left:3px solid var(--accent-2);}
+  .card.c-accent{border-left:3px solid var(--accent);}
+  .card.c-blue{border-left:3px solid var(--blue);}
+  h2{font-size:1.02rem; font-weight:700; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:7px;}
+  h3{color:var(--blue); font-size:.92rem; margin:14px 0 9px; font-weight:700; text-transform:uppercase; letter-spacing:.03em;}
+  p{font-size:.86rem; color:var(--ink-dim);}
+
+  .mini-grid{display:grid; grid-template-columns:1fr; gap:10px; margin:10px 0;}
+  @media (min-width:480px){.mini-grid{grid-template-columns:repeat(auto-fit,minmax(250px,1fr));}}
+  .mini-card{background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:11px 13px;}
+  .mini-card h4{font-size:.85rem; font-weight:700; margin-bottom:4px; color:var(--ink);}
+  .mini-card .sets{font-family:var(--mono); font-size:.78rem; color:var(--ink-dim);}
+
+  /* ===== SESSION STATUS ===== */
+  .session-status{display:flex; gap:6px; margin:10px 0; flex-wrap:wrap;}
+  .session-day{flex:1; min-width:62px; text-align:center; padding:9px 6px; border-radius:7px; background:var(--panel-2); border:1px solid var(--line);}
+  .session-day.completed{background:rgba(0,229,160,.1); border-color:var(--accent-2);}
+  .session-day .d-name{font-family:var(--mono); font-weight:700; font-size:.74rem; color:var(--ink);}
+  .session-day .d-status{font-size:.68rem; color:var(--ink-faint); margin-top:2px;}
+  .session-day.completed .d-status{color:var(--accent-2);}
+
+  /* ===== EXERCISE CARDS ===== */
+  .exercise-grid{display:grid; grid-template-columns:1fr; gap:11px; margin:12px 0;}
+  @media (min-width:480px){.exercise-grid{grid-template-columns:repeat(auto-fit,minmax(255px,1fr));}}
+  .exercise-card{
+    background:var(--panel-2); border:1px solid var(--line); border-left:3px solid var(--ink-faint);
+    border-radius:9px; padding:13px 14px; position:relative;
+  }
+  .exercise-card[data-prio="high"]{border-left-color:var(--accent);}
+  .exercise-card[data-prio="mid"]{border-left-color:var(--accent-3);}
+  .exercise-card[data-prio="low"]{border-left-color:var(--accent-2);}
+  .exercise-card.completed{background:rgba(0,229,160,.06); border-left-color:var(--accent-2);}
+  .exercise-card h4{font-size:.92rem; font-weight:700; display:flex; align-items:center; gap:6px; margin-bottom:5px; color:var(--ink);}
+  .exercise-card .check{color:var(--accent-2); margin-left:auto; display:none; font-size:1rem;}
+  .exercise-card.completed .check{display:inline;}
+  .exercise-card .sets{font-family:var(--mono); font-size:.85rem; color:var(--ink-dim); font-weight:600; margin-bottom:7px;}
+
+  .meta-row{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:9px;}
+  .pill{font-family:var(--mono); font-size:.65rem; font-weight:700; padding:3px 8px; border-radius:5px; letter-spacing:.03em; text-transform:uppercase;}
+  .pill-high{background:rgba(255,61,46,.15); color:var(--accent);}
+  .pill-mid{background:rgba(255,182,39,.15); color:var(--accent-3);}
+  .pill-low{background:rgba(0,229,160,.15); color:var(--accent-2);}
+  .pill-rest{background:var(--panel); color:var(--ink-dim); border:1px solid var(--line);}
+
+  .timer-row{display:flex; align-items:center; gap:10px; margin-bottom:9px;}
+  .timer-btn{background:var(--blue); color:#0b0d10; border:none; padding:6px 11px; border-radius:6px; cursor:pointer; font-size:.76rem; font-weight:700; font-family:var(--mono);}
+  .timer-btn:disabled{opacity:.45;}
+  .timer-display{font-family:var(--mono); font-weight:700; font-size:.95rem; color:var(--ink); font-variant-numeric:tabular-nums;}
+
+  .row-btns{display:flex; gap:7px;}
+  .done-btn{flex:1; background:var(--accent-2); color:#06281e; border:none; padding:8px 9px; border-radius:7px; cursor:pointer; font-size:.78rem; font-weight:700;}
+  .exercise-card.completed .done-btn{background:var(--panel); color:var(--ink-dim); border:1px solid var(--line);}
+  .toggle-detail{background:none; border:1px solid var(--line); color:var(--ink-dim); padding:8px 9px; border-radius:7px; cursor:pointer; font-size:.76rem; font-weight:600;}
+  .exercise-detail{display:none; background:var(--bg); border:1px solid var(--line); padding:10px 11px; border-radius:7px; margin-top:9px; font-size:.8rem; color:var(--ink-dim);}
+  .exercise-card.show-detail .exercise-detail{display:block;}
+
+  .checkpoint-tag{display:inline-block; padding:4px 10px; border-radius:5px; font-family:var(--mono); font-size:.68rem; font-weight:700; text-transform:uppercase; margin-right:6px;}
+  .tag-m1{background:rgba(58,160,255,.15); color:var(--blue);}
+  .tag-m2{background:rgba(255,182,39,.15); color:var(--accent-3);}
+  .tag-m3{background:rgba(255,61,46,.15); color:var(--accent);}
+
+  /* ===== STATS ===== */
+  .stats-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin:12px 0;}
+  .stat-tile{background:var(--panel-2); border:1px solid var(--line); border-radius:9px; padding:13px; text-align:center;}
+  .stat-tile .v{font-family:var(--mono); font-size:1.5rem; font-weight:800; color:var(--blue);}
+  .stat-tile .l{font-size:.72rem; color:var(--ink-faint); margin-top:3px;}
+
+  .check-row{display:flex; align-items:center; gap:9px; margin:9px 0;}
+  .check-row input{width:17px; height:17px; accent-color:var(--accent-2);}
+  .check-row label{font-size:.85rem; color:var(--ink-dim);}
+
+  /* ===== NUTRITION ===== */
+  .nutri-row{display:flex; align-items:center; gap:12px; background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:11px 13px; margin-bottom:9px;}
+  .nutri-icon{font-size:1.4rem;}
+  .nutri-title{font-weight:700; font-size:.86rem; color:var(--ink);}
+  .nutri-desc{font-size:.8rem; color:var(--ink-dim);}
+
+  .water-row{display:flex; justify-content:space-between; gap:4px; margin:12px 0;}
+  .water-cup{flex:1; max-width:36px; height:36px; border:1px solid var(--blue); border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:.72rem; font-weight:700; color:var(--blue); cursor:pointer;}
+  .water-cup.drank{background:var(--blue); color:#0b0d10;}
+
+  /* ===== BUTTONS / RESET ===== */
+  .btn-row{display:flex; flex-wrap:wrap; justify-content:center; gap:9px; margin:18px 0;}
+  .btn{background:var(--panel-2); color:var(--ink); border:1px solid var(--line); padding:10px 15px; border-radius:8px; cursor:pointer; font-weight:600; font-size:.8rem; font-family:var(--mono);}
+  .btn-danger{background:rgba(255,61,46,.12); border-color:var(--accent); color:var(--accent);}
+  .btn-primary{background:var(--accent); border-color:var(--accent); color:#fff;}
+
+  /* ===== MODAL ===== */
+  .modal{display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000; justify-content:center; align-items:center; padding:20px;}
+  .modal.show{display:flex;}
+  .modal-content{background:var(--panel); border:1px solid var(--line); padding:20px; border-radius:12px; width:100%; max-width:380px; max-height:80vh; overflow-y:auto;}
+  .modal-header{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
+  .modal-header h3{font-size:1rem; color:var(--ink);}
+  .modal-close{background:none; border:none; font-size:1.4rem; cursor:pointer; color:var(--ink-dim);}
+  .modal-content ol{padding-left:18px; margin:8px 0 14px; font-size:.85rem; color:var(--ink-dim);}
+  .modal-content li{margin-bottom:5px;}
+
+  .foot{text-align:center; margin-top:24px; padding:15px; border-top:1px solid var(--line); font-size:.72rem; color:var(--ink-faint);}
+  .foot p{font-size:.72rem; margin-bottom:3px; color:var(--ink-faint);}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="dash">
+    <div class="dash-top">
+      <div>
+        <p class="dash-eyebrow">Cockpit / Semaine en cours</p>
+        <h1 class="dash-title">Programme Dos &amp; Masse</h1>
+        <p class="dash-sub">15 ans · 1,935 m · 83,5 kg · 5 séances/sem</p>
+      </div>
+      <div class="dash-controls">
+        <button class="ctrl-btn" id="themeBtn">☀️</button>
+        <button class="ctrl-btn" id="installBtn">📲</button>
+      </div>
+    </div>
+    <div class="readout-strip">
+      <div class="readout"><div class="readout-label">Objectif</div><div class="readout-value">Massif</div></div>
+      <div class="readout"><div class="readout-label">Statut</div><div class="readout-value">Sec</div></div>
+      <div class="readout"><div class="readout-label">Focus</div><div class="readout-value">Dos×2</div></div>
+      <div class="readout"><div class="readout-label">Suivi</div><div class="readout-value">Kiné</div></div>
+    </div>
+  </div>
+
+  <div class="alert-banner"><strong>⚠️ Rappel —</strong> montre ce programme à ton kiné. Il complète ton suivi, il ne le remplace pas.</div>
+
+  <div class="rule-box">
+    <p class="rb-tag">🚦 Règle non-négociable</p>
+    <h3>Le repos est programmé, pas négocié à la douleur</h3>
+    <p>Pousser fort sur chaque série (1–2 RIR sur les mouvements maîtrisés) : oui, encouragé. Mais le jour de repos complet (voir Stats) est fixe chaque semaine, courbatures ou non — c'est lui qui construit le muscle, pas un bonus optionnel. Courbature normale (DOMS) = OK pour continuer. Douleur articulaire, tendineuse ou aiguë = arrêt immédiat, jamais un seuil à atteindre.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="profil">Profil</button>
+    <button class="tab-btn" data-tab="j1">J1</button>
+    <button class="tab-btn" data-tab="j2">J2</button>
+    <button class="tab-btn" data-tab="j3">J3</button>
+    <button class="tab-btn" data-tab="j4">J4</button>
+    <button class="tab-btn" data-tab="j5">J5</button>
+    <button class="tab-btn" data-tab="nutrition">Nutrition</button>
+    <button class="tab-btn" data-tab="stats">Stats</button>
+    <button class="tab-btn" data-tab="conseils">Conseils</button>
+  </div>
+
+  <!-- ===================== PROFIL ===================== -->
+  <div id="profil" class="tab-content active">
+    <div class="card">
+      <h2>📊 Mon profil</h2>
+      <div class="mini-grid">
+        <div class="mini-card"><h4>📏 Taille / Poids</h4><p class="sets">1,935 m · 83,5 kg · ≈11% MG</p></div>
+        <div class="mini-card"><h4>🦴 Âge osseux</h4><p class="sets">+1,5 an d'avance</p></div>
+        <div class="mini-card"><h4>📈 Niveau</h4><p class="sets">Débutant, en progression rapide</p></div>
+        <div class="mini-card"><h4>😴 Sommeil</h4><p class="sets">≈8h / nuit</p></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📅 Cette semaine</h2>
+      <div class="session-status" id="sessionStatus"></div>
+    </div>
+
+    <div class="card c-warm">
+      <h2>🔍 Déséquilibres probables</h2>
+      <div class="mini-grid">
+        <div class="mini-card"><h4>⚖️ Tirage &lt; Poussée</h4><p class="sets">32–35 kg en tirage vs 42–49 kg au Pec Deck</p></div>
+        <div class="mini-card"><h4>🧩 Stabilisateurs faibles</h4><p class="sets">Chest Press &lt; Pec Deck → déficit de stabilisation</p></div>
+        <div class="mini-card"><h4>📐 Grand dorsal court</h4><p class="sets">Limite l'amplitude, referme la posture</p></div>
+        <div class="mini-card"><h4>🌀 Tronc profond en retard</h4><p class="sets">Bas des abdos + gainage à rattraper</p></div>
+      </div>
+    </div>
+
+    <div class="card c-good">
+      <h2>🎯 Objectif central : massif, sec, harmonieux</h2>
+      <p style="margin-bottom:8px;"><strong style="color:var(--ink);">Pourquoi le dos reste prioritaire :</strong> épaules enroulées = dos et épaules qui paraissent plus petits visuellement, peu importe la masse ajoutée dessous. Le dos large + épaules ouvertes, c'est ce qui crée le V-taper.</p>
+      <p><strong style="color:var(--ink);">Ordre d'exécution :</strong> 1. Dos + stabilisateurs · 2. Développement global équilibré · 3. Maintien de la définition · 4. Souplesse/tronc · 5. VMA légère</p>
+    </div>
+
+    <div class="card">
+      <h2>💎 « Massif et sec » — concrètement</h2>
+      <ul style="padding-left:16px; font-size:.86rem; color:var(--ink-dim);">
+        <li style="margin-bottom:7px;">≈11% de masse grasse = bon point de départ pour rester sec en prenant du muscle.</li>
+        <li style="margin-bottom:7px;"><strong style="color:var(--ink);">Surplus modéré</strong>, pas un bulk agressif — sinon prise de gras inutile + protocole traction ralenti.</li>
+        <li style="margin-bottom:7px;"><strong style="color:var(--ink);">5 séances/semaine</strong> dont 2 dos, 1 jambes, 1 poussée, 1 bras/épaules dédiée — le volume complet construit la silhouette massive.</li>
+        <li>Plus lent qu'un bulk classique, mais sans yo-yo masse/sèche — le chemin le plus direct vers ce que tu veux.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- day shells -->
+  <div id="j1" class="tab-content"><div class="card"><h2>🅙1 Dos &amp; Posture</h2><p style="margin-bottom:6px;">Séance prioritaire · ≈75-80 min · traction assistée</p><div class="exercise-grid" id="grid-j1"></div></div></div>
+  <div id="j2" class="tab-content"><div class="card"><h2>🅙2 Poussée</h2><p style="margin-bottom:6px;">Pectoraux / épaules / triceps · ≈70 min</p><div class="exercise-grid" id="grid-j2"></div></div></div>
+  <div id="j3" class="tab-content"><div class="card"><h2>🅙3 Dos (variante) &amp; Bras</h2><p style="margin-bottom:6px;">2ᵉ séance dos + tractions négatives · ≈75 min</p><div class="exercise-grid" id="grid-j3"></div></div></div>
+  <div id="j4" class="tab-content"><div class="card"><h2>🅙4 Jambes &amp; Core</h2><p style="margin-bottom:6px;">Jambes complètes + tronc · ≈65 min</p><div class="exercise-grid" id="grid-j4"></div></div></div>
+  <div id="j5" class="tab-content"><div class="card"><h2>🅙5 Bras &amp; Épaules — Volume Esthétique</h2><p style="margin-bottom:6px;">Séance bonus, faible fatigue articulaire · ≈55 min · supersets autorisés</p><div class="exercise-grid" id="grid-j5"></div></div></div>
+
+  <!-- ===================== NUTRITION ===================== -->
+  <div id="nutrition" class="tab-content">
+    <div class="card">
+      <h2>🍎 Nutrition</h2>
+      <div class="rule-box" style="margin-bottom:12px;">
+        <p class="rb-tag">🎯 Masse ET définition</p>
+        <p style="margin-top:4px;">Jamais de restriction — mais pas de bulk agressif. Surplus modéré et progressif : tu grossis lentement en gardant la définition, un excès trop fort fait juste prendre du gras et ralentit le protocole traction.</p>
+      </div>
+      <div class="nutri-row"><div class="nutri-icon">📐</div><div><div class="nutri-title">Suivre sans se restreindre</div><div class="nutri-desc">Poids + tour de taille toutes les 2–3 semaines. Les deux montent vite ensemble → trop de surplus, on réduit légèrement.</div></div></div>
+      <div class="nutri-row"><div class="nutri-icon">🥩</div><div><div class="nutri-title">Protéines</div><div class="nutri-desc">≈1,2–1,7 g/kg/j sur 3–4 prises : viandes maigres, poisson, œufs, laitages, légumineuses</div></div></div>
+      <div class="nutri-row"><div class="nutri-icon">🍚</div><div><div class="nutri-title">Glucides</div><div class="nutri-desc">Riz, pâtes, pain complet, fruits — à privilégier autour des séances</div></div></div>
+      <div class="nutri-row"><div class="nutri-icon">🥑</div><div><div class="nutri-title">Lipides</div><div class="nutri-desc">Huile d'olive, oléagineux, poisson gras — soutien hormonal à l'adolescence</div></div></div>
+
+      <h3>💧 Hydratation du jour</h3>
+      <div class="water-row" id="waterTracker"></div>
+
+      <h3>🍽️ Structure des repas</h3>
+      <div class="mini-grid">
+        <div class="mini-card"><h4>🍳 Petit-déjeuner</h4><p class="sets">Féculent complet + protéine + fruit — jamais sauté (trajet bus 314 + dénivelé)</p></div>
+        <div class="mini-card"><h4>🍗 Déjeuner</h4><p class="sets">Protéine + féculent + légumes</p></div>
+        <div class="mini-card"><h4>🥪 Autour séance</h4><p class="sets">Fruit + protéine légère avant ; repas complet 1–2h après</p></div>
+        <div class="mini-card"><h4>🍲 Dîner</h4><p class="sets">Protéine + féculent + légumes</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== STATS ===================== -->
+  <div id="stats" class="tab-content">
+    <div class="card c-blue">
+      <h2>📈 Télémétrie</h2>
+      <div class="stats-grid">
+        <div class="stat-tile"><div class="v" id="statWorkouts">0/5</div><div class="l">Séances cette semaine</div></div>
+        <div class="stat-tile"><div class="v" id="statExercises">0</div><div class="l">Exercices validés</div></div>
+        <div class="stat-tile"><div class="v" id="statConsistency">0%</div><div class="l">Régularité semaine</div></div>
+        <div class="stat-tile"><div class="v" id="statStreak">0</div><div class="l">Semaines ≥5 séances</div></div>
+      </div>
+
+      <h3>🎯 Objectifs de la semaine</h3>
+      <div class="check-row"><input type="checkbox" id="goal1"><label for="goal1">5 séances réalisées</label></div>
+      <div class="check-row"><input type="checkbox" id="goal2"><label for="goal2">Dos travaillé en priorité (J1 + J3)</label></div>
+      <div class="check-row"><input type="checkbox" id="goal3"><label for="goal3">≈8h de sommeil chaque nuit</label></div>
+      <div class="check-row"><input type="checkbox" id="goal4"><label for="goal4">1 jour de repos complet respecté</label></div>
+    </div>
+  </div>
+
+  <!-- ===================== CONSEILS ===================== -->
+  <div id="conseils" class="tab-content">
+    <div class="card">
+      <h2>💡 Méthodologie</h2>
+      <div class="rule-box">
+        <p class="rb-tag">🎯 Intensité encadrée</p>
+        <p style="margin-top:4px;">Pas de 1RM à cet âge. Sur les mouvements que tu maîtrises bien (dès S5), tu peux descendre à 1–2 RIR — c'est la version sûre de « pousser au maximum ». Sur les nouveaux mouvements (traction, pull-over), on reste à 3 RIR le temps d'apprendre.</p>
+      </div>
+      <div class="mini-grid">
+        <div class="mini-card"><h4>🏋️ Composé</h4><p class="sets">75–90s repos · tempo 2-0-2 · 1–2 RIR (mouvements maîtrisés)</p></div>
+        <div class="mini-card"><h4>🔧 Isolation</h4><p class="sets">45–60s repos · tempo 2-1-2 · 2 RIR</p></div>
+        <div class="mini-card"><h4>🧱 Gainage</h4><p class="sets">30–45s repos · arrêt dès que la forme se dégrade</p></div>
+      </div>
+    </div>
+
+    <div class="card c-good">
+      <h2>🤸‍♂️ Protocole tractions</h2>
+      <div class="mini-grid">
+        <div class="mini-card"><h4>Jour 1 — Machine assistée</h4><p class="sets">4×6–8, assistance proche de l'échec. -2–4kg dès que 4×8 est propre.</p></div>
+        <div class="mini-card"><h4>Jour 3 — Négatives</h4><p class="sets">3×4–6, montée aidée + descente 4–5s contrôlée.</p></div>
+      </div>
+      <p style="margin-top:8px;">⚖️ Surplus calorique trop agressif = traction plus lente, même si la masse globale progresse. Garde le surplus modéré (onglet Nutrition).</p>
+    </div>
+
+    <div class="card">
+      <h2>📈 Progression semaine après semaine</h2>
+      <div class="mini-grid">
+        <div class="mini-card"><h4>S1–2</h4><p class="sets">Technique sur les nouveaux mouvements, 3 RIR</p></div>
+        <div class="mini-card"><h4>Dès S3</h4><p class="sets">Dos : réévaluation chaque semaine, charge/assistance ajustée</p></div>
+        <div class="mini-card"><h4>Dès S5</h4><p class="sets">1–2 RIR sur tout mouvement maîtrisé</p></div>
+        <div class="mini-card"><h4>Toutes les 6 sem.</h4><p class="sets">Décharge obligatoire, –1 série/exercice — non négociable</p></div>
+      </div>
+    </div>
+
+    <div class="card c-accent">
+      <h2>🚫 À éviter ou limiter</h2>
+      <div class="mini-grid">
+        <div class="mini-card"><h4>❌ Test 1RM</h4><p class="sets">Aucun bénéfice, risque inutile en croissance</p></div>
+        <div class="mini-card"><h4>❌ Tirage/développé nuque</h4><p class="sets">Risque d'épaule, aggrave la posture</p></div>
+        <div class="mini-card"><h4>❌ Squat/SDT proche du max</h4><p class="sets">Compression axiale, technique pas encore assez solide</p></div>
+        <div class="mini-card"><h4>⚠️ Douleur ≠ objectif</h4><p class="sets">Articulaire/tendineuse/aiguë = arrêt immédiat, jamais un seuil à tenir</p></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🪑 Posture au quotidien</h2>
+      <p>Lycée, bus 314, cours : micro-pauses pour tirer les omoplates et ouvrir la cage thoracique. À la maison : étirements dorsal/pectoraux, gainage progressif.</p>
+    </div>
+
+    <div class="card">
+      <h2>🏢 Machines Basic-Fit à privilégier</h2>
+      <div class="mini-grid">
+        <div class="mini-card"><h4>Tirage vertical</h4><p class="sets">Lat Pulldown (large/serré/neutre)</p></div>
+        <div class="mini-card"><h4>Tirage horizontal</h4><p class="sets">Seated Row / appui poitrine</p></div>
+        <div class="mini-card"><h4>Stabilisateurs</h4><p class="sets">Reverse Pec Deck ou Face Pull</p></div>
+        <div class="mini-card"><h4>Traction/Dips</h4><p class="sets">Machine assistée à contrepoids</p></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🏁 Indicateurs de progression</h2>
+      <div class="mini-grid">
+        <div class="mini-card"><h4><span class="checkpoint-tag tag-m1">3 mois</span></h4><p class="sets">8–10 pompes · planche 35–40s · 1ʳᵉ négative complète</p></div>
+        <div class="mini-card"><h4><span class="checkpoint-tag tag-m2">6 mois</span></h4><p class="sets">1 à 3 tractions non assistées · 15+ pompes</p></div>
+        <div class="mini-card"><h4><span class="checkpoint-tag tag-m3">12 mois</span></h4><p class="sets">6–8+ tractions non assistées · 25+ pompes</p></div>
+      </div>
+      <p style="margin-top:8px;">Repère, pas une promesse : régularité + surplus modéré + repos respecté = ce qui rend ça atteignable.</p>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn" id="resetWeekBtn">🔄 Reset semaine</button>
+    <button class="btn btn-danger" id="resetAllBtn">📊 Reset tout</button>
+    <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimer</button>
+  </div>
+
+  <div class="foot">
+    <p>📅 Programme bâti sur ton bilan kiné et tes performances réelles</p>
+    <p>⚠️ Douleur inhabituelle ou persistante → kiné ou médecin du sport</p>
+  </div>
+</div>
+
+<div class="modal" id="installModal">
+  <div class="modal-content">
+    <div class="modal-header"><h3>📲 Ajouter à l'écran d'accueil</h3><button class="modal-close" id="closeInstall">×</button></div>
+    <p><strong>iOS (Safari) :</strong></p>
+    <ol><li>Bouton partage ⬆️</li><li>« Sur l'écran d'accueil »</li><li>« Ajouter »</li></ol>
+    <p><strong>Android (Chrome) :</strong></p>
+    <ol><li>Menu ⋮</li><li>« Ajouter à l'écran d'accueil »</li><li>Confirme</li></ol>
+  </div>
+</div>
+
+<div class="modal" id="resetModal">
+  <div class="modal-content">
+    <div class="modal-header"><h3>Confirmer la réinitialisation</h3><button class="modal-close" id="closeReset">×</button></div>
+    <p>Tout ton suivi sera effacé définitivement.</p>
+    <div style="display:flex; justify-content:space-between; margin-top:16px; gap:10px;">
+      <button class="btn" style="flex:1;" id="cancelReset">Annuler</button>
+      <button class="btn btn-danger" style="flex:1;" id="confirmReset">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   PROGRAMME — 5 jours
+   ========================================================= */
+const PROGRAM = {
+  j1: [
+    {id:'e1', icon:'🔥', name:'Échauffement scapulaire', sets:'5 min', rest:0, prio:'mid', detail:"Rotations d'épaules + activation légère des omoplates."},
+    {id:'e2', icon:'🤸‍♂️', name:'Traction assistée (machine à contrepoids)', sets:'4 × 6–8', rest:90, prio:'high', detail:"Assistance réglée proche de l'échec technique (1–2 RIR). Réduis l'assistance de 2–4kg dès que 4×8 est propre. Objectif : 0kg d'ici 3–4 mois."},
+    {id:'e3', icon:'⬇️', name:'Tirage vertical, prise large', sets:'5 × 10–12', rest:90, prio:'high', detail:"Coudes vers le bas/l'arrière, jamais derrière la nuque. 5ᵉ série = intensification (1–2 RIR dès S5)."},
+    {id:'e4', icon:'⬅️', name:'Rowing assis, poulie basse', sets:'4 × 10–12', rest:90, prio:'high', detail:'Dos droit, coudes près du corps, écarter les omoplates en fin de mouvement.'},
+    {id:'e5', icon:'🎯', name:'Tirage horizontal, buste fixé', sets:'3 × 12–15', rest:75, prio:'high', detail:'Chest-supported row, sinon rowing machine à appui poitrine.'},
+    {id:'e6', icon:'📏', name:'Pull-over poulie haute (bras tendus)', sets:'3 × 12–15', rest:60, prio:'high', detail:'Isolation du grand dorsal sur toute son amplitude. On tire avec le dos, pas les bras.'},
+    {id:'e7', icon:'🦅', name:'Reverse Pec Deck', sets:'3 × 15', rest:60, prio:'high', detail:'Charge légère, focus omoplates — clé pour la posture.'},
+    {id:'e8', icon:'🧱', name:'Gainage planche', sets:'3 × 25–35s', rest:45, prio:'high', detail:'Propre avant long. +5s dès que les 3 séries sont clean.'},
+    {id:'e9', icon:'🤸', name:'Étirement grand dorsal', sets:'2 × 30s', rest:0, prio:'high', detail:'Suspension passive courte ou étirement mural.'}
+  ],
+  j2: [
+    {id:'e1', icon:'🔥', name:'Échauffement rotateurs', sets:'5 min', rest:0, prio:'mid', detail:'Mobilité épaules.'},
+    {id:'e2', icon:'🫸', name:'Chest Press', sets:'4 × 10–12', rest:90, prio:'mid', detail:'Maîtrise la technique avant de charger — ton mouvement le moins stabilisé.'},
+    {id:'e3', icon:'🤲', name:'Dips assistés (machine à contrepoids)', sets:'3 × 8–10', rest:75, prio:'mid', detail:'Buste légèrement penché en avant pour cibler aussi les pectoraux.'},
+    {id:'e4', icon:'🙌', name:'Shoulder Press', sets:'3 × 10–12', rest:90, prio:'mid', detail:'Lombaires plaquées, ne pas cambrer.'},
+    {id:'e5', icon:'🦋', name:'Pec Deck', sets:'3 × 12–15', rest:60, prio:'low', detail:'Déjà un point fort : on maintient.'},
+    {id:'e6', icon:'↔️', name:'Élévations latérales', sets:'4 × 15', rest:60, prio:'mid', detail:"Légère flexion du coude, jusqu'à l'horizontale max. Largeur d'épaule = levier direct du physique large."},
+    {id:'e7', icon:'💪', name:'Triceps poulie haute', sets:'4 × 12–15', rest:60, prio:'mid', detail:'Coudes fixes — le triceps fait la majorité du volume du bras.'},
+    {id:'e8', icon:'🧱', name:'Gainage latéral', sets:'2 × 15–20s/côté', rest:45, prio:'high', detail:'Hanche haute, alignement épaule-hanche-genou.'},
+    {id:'e9', icon:'🤸', name:'Étirement pectoraux', sets:'2 × 30s', rest:0, prio:'high', detail:'Bras sur cadre de porte, légère rotation du buste.'}
+  ],
+  j3: [
+    {id:'e1', icon:'🔥', name:'Échauffement scapulaire', sets:'5 min', rest:0, prio:'mid', detail:'Mobilité avant la première série.'},
+    {id:'e2', icon:'🤸‍♂️', name:'Tractions négatives', sets:'3 × 4–6', rest:90, prio:'high', detail:"Monte avec aide (saut léger/step), descends lentement (4–5s). Complète la machine du jour 1."},
+    {id:'e3', icon:'⬇️', name:'Tirage vertical, prise serrée/neutre', sets:'5 × 10–12', rest:90, prio:'high', detail:"Angle différent du jour 1."},
+    {id:'e4', icon:'🔁', name:'Rowing un bras', sets:'3 × 12/bras', rest:75, prio:'high', detail:'Anti-rotation du buste, contraction franche.'},
+    {id:'e5', icon:'🎯', name:'Face Pull (poulie haute)', sets:'3 × 15', rest:60, prio:'high', detail:'Tirer vers le visage, coudes hauts — clé pour la posture.'},
+    {id:'e6', icon:'🧱', name:'Gainage anti-rotation', sets:'3 × 12/côté', rest:45, prio:'high', detail:'Pallof press à la poulie, sinon planche classique.'},
+    {id:'e7', icon:'🤸', name:'Étirement dorsal + mobilité thoracique', sets:'2 × 30s', rest:0, prio:'high', detail:'Rotation thoracique sur banc ou au sol.'}
+  ],
+  j4: [
+    {id:'e1', icon:'🚴', name:'Échauffement vélo léger', sets:'5 min', rest:0, prio:'mid', detail:'Mise en route articulaire.'},
+    {id:'e2', icon:'🦵', name:'Presse à cuisses', sets:'4 × 12–15', rest:90, prio:'mid', detail:'Ajuste le siège pour tes fémurs longs, pas de verrouillage des genoux en haut.'},
+    {id:'e3', icon:'🦵', name:'Leg Extension', sets:'3 × 12–15', rest:60, prio:'mid', detail:"Contrôle en descente, pas d'à-coup."},
+    {id:'e4', icon:'🦵', name:'Leg Curl (ischios)', sets:'3 × 12–15', rest:60, prio:'mid', detail:'Équilibre quadriceps/ischios.'},
+    {id:'e5', icon:'🔻', name:'Adducteurs', sets:'2 × 15', rest:60, prio:'low', detail:"Amplitude progressive."},
+    {id:'e6', icon:'🔺', name:'Abducteurs', sets:'2 × 15', rest:60, prio:'low', detail:'—'},
+    {id:'e7', icon:'🦶', name:'Mollets', sets:'3 × 15–20', rest:45, prio:'low', detail:'Amplitude complète, pause en étirement.'},
+    {id:'e8', icon:'🔥', name:'Abdominaux bas', sets:'3 × 12–15', rest:60, prio:'high', detail:'Relevé de jambes ou crunch inversé.'},
+    {id:'e9', icon:'🧱', name:'Gainage planche', sets:'3 × 25–35s', rest:45, prio:'high', detail:'—'}
+  ],
+  j5: [
+    {id:'e1', icon:'🔥', name:'Échauffement bras/épaules', sets:'5 min', rest:0, prio:'mid', detail:'Mobilité légère avant la première série.'},
+    {id:'e2', icon:'🙆', name:'Élévation frontale (poulie ou haltères légers)', sets:'3 × 12–15', rest:60, prio:'mid', detail:'Complète le delt antérieur — angle différent du jour 2.'},
+    {id:'e3', icon:'↔️', name:'Élévations latérales, poulie basse', sets:'3 × 15', rest:60, prio:'mid', detail:'Tension constante, angle différent du jour 2 — couverture complète du delt moyen.'},
+    {id:'e4', icon:'💪', name:'Curl pupitre (preacher curl)', sets:'3 × 10–12', rest:30, prio:'mid', detail:"Enchaîne juste après avec l'extension triceps overhead (superset), 15–20s entre les deux, repos complet après la paire."},
+    {id:'e5', icon:'🔼', name:'Extension triceps poulie haute, bras au-dessus de la tête', sets:'3 × 12–15', rest:75, prio:'mid', detail:'Cible le chef long du triceps — superset avec le curl pupitre précédent.'},
+    {id:'e6', icon:'🔄', name:'Curl inversé (prise pronation)', sets:'3 × 12', rest:60, prio:'mid', detail:'Brachioradialis / avant-bras — complète la force de préhension pour les tractions.'},
+    {id:'e7', icon:'🔥', name:'Crunch lesté (machine ou poulie haute)', sets:'3 × 15–20', rest:45, prio:'high', detail:'Complète le travail du bas des abdos du jour 4 par la portion haute.'},
+    {id:'e8', icon:'🤸', name:'Étirement bras/épaules', sets:'2 × 30s', rest:0, prio:'high', detail:'—'}
+  ]
+};
+const DAY_IDS = ['j1','j2','j3','j4','j5'];
+const DAY_LABELS = {j1:'J1', j2:'J2', j3:'J3', j4:'J4', j5:'J5'};
+const PRIO_LABEL = {high:'Haute', mid:'Moyenne', low:'Faible'};
+
+/* =========================================================
+   ÉTAT — persistance via window.storage (artifact-safe)
+   ========================================================= */
+const STORAGE_KEY = 'training-state-v2';
+const hasStorage = !!(window.storage && typeof window.storage.get === 'function');
+
+function isoWeek(d){
+  const date = new Date(d.getTime());
+  date.setHours(0,0,0,0);
+  date.setDate(date.getDate() + 3 - (date.getDay()+6)%7);
+  const week1 = new Date(date.getFullYear(),0,4);
+  const weekNo = 1 + Math.round(((date-week1)/86400000 - 3 + (week1.getDay()+6)%7)/7);
+  return `${date.getFullYear()}-W${weekNo}`;
+}
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+let state = {
+  weekId: isoWeek(new Date()),
+  exercises: {},
+  sessions: {j1:false,j2:false,j3:false,j4:false,j5:false},
+  goals: {goal1:false,goal2:false,goal3:false,goal4:false},
+  streak: 0,
+  water: {date: todayStr(), count: 0},
+  theme: 'dark'
+};
+
+async function loadState(){
+  if(hasStorage){
+    try{
+      const res = await window.storage.get(STORAGE_KEY, false);
+      if(res && res.value){
+        const loaded = JSON.parse(res.value);
+        state = Object.assign(state, loaded);
+        state.exercises = loaded.exercises || {};
+        state.sessions = loaded.sessions || state.sessions;
+        state.goals = loaded.goals || state.goals;
+        state.water = loaded.water || state.water;
+      }
+    }catch(e){ /* pas encore de données sauvegardées */ }
+  }
+  const currentWeek = isoWeek(new Date());
+  if(state.weekId !== currentWeek){
+    const metGoal = Object.values(state.sessions).filter(Boolean).length >= 5;
+    state.streak = metGoal ? (state.streak||0) + 1 : 0;
+    state.weekId = currentWeek;
+    state.exercises = {};
+    state.sessions = {j1:false,j2:false,j3:false,j4:false,j5:false};
+    state.goals = {goal1:false,goal2:false,goal3:false,goal4:false};
+    saveState();
+  }
+  if(state.water.date !== todayStr()){
+    state.water = {date: todayStr(), count: 0};
+  }
+}
+
+async function saveState(){
+  if(!hasStorage) return;
+  try{ await window.storage.set(STORAGE_KEY, JSON.stringify(state), false); }
+  catch(e){ console.error('Sauvegarde impossible', e); }
+}
+
+/* =========================================================
+   RENDU
+   ========================================================= */
+function fmtTime(s){ return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
+
+function renderDay(dayId){
+  const grid = document.getElementById('grid-'+dayId);
+  grid.innerHTML = PROGRAM[dayId].map(ex => {
+    const key = dayId+'-'+ex.id;
+    const done = !!state.exercises[key];
+    const restBadge = ex.rest > 0 ? `<span class="pill pill-rest">⏱ ${ex.rest}s</span>` : '';
+    const timer = ex.rest > 0 ? `
+      <div class="timer-row">
+        <button class="timer-btn" data-rest="${ex.rest}" data-key="${key}">▶ Repos</button>
+        <span class="timer-display" id="timer-${key}">${fmtTime(ex.rest)}</span>
+      </div>` : '';
+    return `
+    <div class="exercise-card ${done?'completed':''}" id="card-${key}" data-key="${key}" data-prio="${ex.prio}">
+      <h4>${ex.icon} ${ex.name} <span class="check">✓</span></h4>
+      <p class="sets">${ex.sets}</p>
+      <div class="meta-row">
+        <span class="pill pill-${ex.prio}">${PRIO_LABEL[ex.prio]}</span>
+        ${restBadge}
+      </div>
+      ${timer}
+      <div class="row-btns">
+        <button class="done-btn" data-key="${key}">${done?'✓ Fait':'Marquer fait'}</button>
+        <button class="toggle-detail" data-key="${key}">▼ Détails</button>
+      </div>
+      <div class="exercise-detail">${ex.detail}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderSessionStatus(){
+  const container = document.getElementById('sessionStatus');
+  container.innerHTML = DAY_IDS.map(d => {
+    const done = state.sessions[d];
+    return `<div class="session-day ${done?'completed':''}">
+      <div class="d-name">${DAY_LABELS[d]}</div>
+      <div class="d-status">${done ? '✓' : '⏳'}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderWater(){
+  const t = document.getElementById('waterTracker');
+  let html = '';
+  for(let i=1;i<=8;i++){
+    html += `<div class="water-cup ${i<=state.water.count?'drank':''}" data-cup="${i}">${i}</div>`;
+  }
+  t.innerHTML = html;
+}
+
+function renderGoals(){
+  Object.keys(state.goals).forEach(g => {
+    const el = document.getElementById(g);
+    if(el) el.checked = !!state.goals[g];
+  });
+}
+
+function renderStats(){
+  const doneEx = Object.values(state.exercises).filter(Boolean).length;
+  const workouts = Object.values(state.sessions).filter(Boolean).length;
+  document.getElementById('statWorkouts').textContent = workouts+'/5';
+  document.getElementById('statExercises').textContent = doneEx;
+  document.getElementById('statConsistency').textContent = Math.round((workouts/5)*100)+'%';
+  document.getElementById('statStreak').textContent = state.streak || 0;
+}
+
+function renderAll(){
+  DAY_IDS.forEach(renderDay);
+  renderSessionStatus();
+  renderWater();
+  renderGoals();
+  renderStats();
+  applyTheme();
+}
+
+function applyTheme(){
+  document.body.classList.toggle('light-mode', state.theme === 'light');
+  document.getElementById('themeBtn').textContent = state.theme === 'light' ? '🌙' : '☀️';
+}
+
+/* =========================================================
+   EVENTS
+   ========================================================= */
+document.addEventListener('click', (e) => {
+
+  const tabBtn = e.target.closest('.tab-btn');
+  if(tabBtn){
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+    tabBtn.classList.add('active');
+    document.getElementById(tabBtn.dataset.tab).classList.add('active');
+    return;
+  }
+
+  const doneBtn = e.target.closest('.done-btn');
+  if(doneBtn){
+    const key = doneBtn.dataset.key;
+    const dayId = key.split('-')[0];
+    state.exercises[key] = !state.exercises[key];
+    const card = document.getElementById('card-'+key);
+    card.classList.toggle('completed', state.exercises[key]);
+    doneBtn.textContent = state.exercises[key] ? '✓ Fait' : 'Marquer fait';
+    state.sessions[dayId] = PROGRAM[dayId].some(ex => state.exercises[dayId+'-'+ex.id]);
+    renderSessionStatus();
+    renderStats();
+    saveState();
+    return;
+  }
+
+  const detailBtn = e.target.closest('.toggle-detail');
+  if(detailBtn){
+    const card = document.getElementById('card-'+detailBtn.dataset.key);
+    card.classList.toggle('show-detail');
+    detailBtn.textContent = card.classList.contains('show-detail') ? '▲ Masquer' : '▼ Détails';
+    return;
+  }
+
+  const cup = e.target.closest('.water-cup');
+  if(cup){
+    const n = parseInt(cup.dataset.cup);
+    state.water.count = (state.water.count === n) ? n-1 : n;
+    renderWater();
+    saveState();
+    return;
+  }
+
+  if(e.target.closest('#themeBtn')){
+    state.theme = state.theme === 'light' ? 'dark' : 'light';
+    applyTheme();
+    saveState();
+    return;
+  }
+
+  if(e.target.closest('#installBtn')){ document.getElementById('installModal').classList.add('show'); return; }
+  if(e.target.closest('#closeInstall')){ document.getElementById('installModal').classList.remove('show'); return; }
+
+  if(e.target.closest('#resetWeekBtn')){
+    state.exercises = {};
+    state.sessions = {j1:false,j2:false,j3:false,j4:false,j5:false};
+    state.goals = {goal1:false,goal2:false,goal3:false,goal4:false};
+    renderAll();
+    saveState();
+    return;
+  }
+
+  if(e.target.closest('#resetAllBtn')){ document.getElementById('resetModal').classList.add('show'); return; }
+  if(e.target.closest('#closeReset') || e.target.closest('#cancelReset')){ document.getElementById('resetModal').classList.remove('show'); return; }
+  if(e.target.closest('#confirmReset')){
+    state = {
+      weekId: isoWeek(new Date()), exercises:{}, sessions:{j1:false,j2:false,j3:false,j4:false,j5:false},
+      goals:{goal1:false,goal2:false,goal3:false,goal4:false}, streak:0,
+      water:{date:todayStr(), count:0}, theme: state.theme
+    };
+    renderAll();
+    saveState();
+    document.getElementById('resetModal').classList.remove('show');
+    return;
+  }
+
+  const timerBtn = e.target.closest('.timer-btn');
+  if(timerBtn && !timerBtn.disabled){
+    const rest = parseInt(timerBtn.dataset.rest);
+    const display = document.getElementById('timer-'+timerBtn.dataset.key);
+    let seconds = rest;
+    timerBtn.disabled = true;
+    const iv = setInterval(() => {
+      seconds--;
+      display.textContent = fmtTime(Math.max(seconds,0));
+      if(seconds <= 0){
+        clearInterval(iv);
+        timerBtn.disabled = false;
+        display.textContent = fmtTime(rest);
+        if('Notification' in window && Notification.permission === 'granted'){
+          new Notification('Temps de repos terminé !');
+        }
+      }
+    }, 1000);
+    return;
+  }
+});
+
+document.addEventListener('change', (e) => {
+  if(e.target.matches('.check-row input')){
+    state.goals[e.target.id] = e.target.checked;
+    saveState();
+  }
+});
+
+(async function init(){
+  await loadState();
+  renderAll();
+  if('Notification' in window && Notification.permission === 'default'){
+    Notification.requestPermission().catch(()=>{});
+  }
+})();
+</script>
+</body>
+</html>
