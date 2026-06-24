@@ -1,0 +1,2139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F4F7FB">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TITAN OS">
+<title>TITAN OS — Cortex</title>
+
+<style>
+  :root{
+    --bg:#eef2ff;
+    --bg-2:#dde7ff;
+    --panel:rgba(255,255,255,.82);
+    --panel-strong:#ffffff;
+    --panel-soft:rgba(16,24,40,.06);
+    --panel-dim:rgba(16,24,40,.04);
+    --text:#0f172a;
+    --text-dim:#5b6477;
+    --text-faint:#8b95a7;
+    --line:rgba(15,23,42,.10);
+    --accent:#6d28d9;
+    --accent-2:#06b6d4;
+    --accent-3:#22c55e;
+    --danger:#ef4444;
+    --warn:#f59e0b;
+    --radius:30px;
+    --radius-sm:20px;
+    --shadow:0 28px 70px rgba(15,23,42,.10);
+    --shadow-soft:0 12px 30px rgba(15,23,42,.08);
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","Roboto Mono","Cascadia Mono",Consolas,monospace;
+  }
+  body[data-theme="dark"]{
+    --bg:#050816;
+    --bg-2:#0d1220;
+    --panel:rgba(15,20,34,.78);
+    --panel-strong:#12182a;
+    --panel-soft:rgba(255,255,255,.05);
+    --panel-dim:rgba(255,255,255,.04);
+    --text:#edf2ff;
+    --text-dim:#a4afc4;
+    --text-faint:#68748f;
+    --line:rgba(255,255,255,.08);
+    --shadow:0 28px 70px rgba(0,0,0,.40);
+    --shadow-soft:0 12px 30px rgba(0,0,0,.22);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{overflow-x:hidden;scrollbar-gutter:stable;}
+  body{
+    min-height:100vh;
+    color:var(--text);
+    font-family:var(--sans);
+    line-height:1.45;
+    letter-spacing:-.01em;
+    transition:background .25s,color .25s;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    background:
+      radial-gradient(circle at 10% 10%, rgba(109,40,217,.22), transparent 20%),
+      radial-gradient(circle at 90% 12%, rgba(6,182,212,.20), transparent 18%),
+      radial-gradient(circle at 82% 88%, rgba(34,197,94,.14), transparent 18%),
+      linear-gradient(180deg, var(--bg-2), var(--bg) 30%, var(--bg));
+  }
+  body::before{
+    content:"";
+    position:fixed;inset:-20% -15% auto -15%;height:40vh;pointer-events:none;z-index:-1;
+    background:linear-gradient(90deg, rgba(109,40,217,.18), rgba(6,182,212,.12), transparent 70%);
+    filter:blur(60px);
+  }
+  button,input,textarea,select{font:inherit;}
+  input,textarea,select{min-width:0;}
+  button{cursor:pointer;touch-action:manipulation;}
+  img,svg,video,canvas{max-width:100%;display:block;}
+
+  .app{
+    width:min(100%, 1520px);
+    margin:0 auto;
+    padding:18px;
+    display:grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    grid-template-areas:
+      "topbar topbar"
+      "tabs views"
+      "foot foot";
+    gap:18px;
+  }
+  .topbar{grid-area:topbar;}
+  .tabs{grid-area:tabs;}
+  .views{grid-area:views;min-width:0;}
+  .foot{grid-area:foot;}
+
+  .topbar{
+    display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
+    padding:22px 22px 20px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:34px;
+    box-shadow:var(--shadow);
+    backdrop-filter:blur(22px);
+    position:sticky;top:12px;z-index:50;
+  }
+  .brand{min-width:0;max-width:900px;}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:.72rem;font-weight:900;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--accent-2);
+  }
+  .eyebrow::before{
+    content:"";width:8px;height:8px;border-radius:99px;background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow:0 0 0 6px rgba(109,40,217,.09);
+  }
+  .title{
+    margin-top:10px;
+    font-size:clamp(2rem, 4vw, 4.4rem);
+    font-weight:980;
+    line-height:.94;
+    letter-spacing:-.06em;
+    max-width:10ch;
+  }
+  .subtitle{
+    margin-top:10px;
+    font-size:.95rem;
+    color:var(--text-dim);
+    max-width:62ch;
+  }
+  .top-actions{display:flex;gap:10px;align-items:center;flex-shrink:0;}
+  .pill-btn,.icon-btn,.small-btn,.secondary-btn,.primary-btn,.danger-btn{
+    border:none;border-radius:999px;font-weight:900;letter-spacing:-.01em;
+    transition:transform .16s ease, box-shadow .16s ease, background .16s ease, border-color .16s ease;
+  }
+  .pill-btn,.icon-btn{
+    height:46px;padding:0 16px;background:var(--panel-strong);color:var(--text);
+    border:1px solid var(--line);box-shadow:var(--shadow-soft);
+  }
+  .icon-btn{width:46px;padding:0;}
+  .pill-btn:active,.icon-btn:active,.small-btn:active,.secondary-btn:active,.primary-btn:active,.danger-btn:active{transform:translateY(1px) scale(.99);}
+
+  .tabs{
+    position:sticky;top:110px;align-self:start;z-index:40;
+    display:flex;flex-direction:column;gap:10px;
+    padding:14px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:34px;
+    box-shadow:var(--shadow);
+    backdrop-filter:blur(22px);
+    min-height:calc(100vh - 140px);
+  }
+  .tab{
+    width:100%;text-align:left;padding:14px 16px;border-radius:20px;
+    background:transparent;color:var(--text-dim);border:1px solid transparent;
+    font-size:.95rem;font-weight:850;
+  }
+  .tab.active{
+    color:var(--text);
+    background:linear-gradient(135deg, rgba(109,40,217,.14), rgba(6,182,212,.12));
+    border-color:rgba(109,40,217,.18);
+    box-shadow:0 12px 28px rgba(109,40,217,.10);
+  }
+
+  .view{display:none;min-width:0;}
+  .view.active{display:block;animation:rise .22s ease;}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  .card,.hero,.session-card,.chat-shell,.analysis-hero,.modal-card,.timer-box,.notice,.mini-card,.bubble,.empty,.field,
+  .profile-form,.day,.kpi,.stat-tile,.exercise,.chart-card,.setting-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow-soft);
+    backdrop-filter:blur(18px);
+  }
+  .card,.hero,.analysis-hero,.session-card,.chat-shell,.chart-card{padding:18px;margin-bottom:14px;overflow:hidden;}
+  .section-title,.card-title{font-size:1.02rem;font-weight:950;letter-spacing:-.04em;margin-bottom:8px;}
+  .section-sub,.card-sub{font-size:.86rem;color:var(--text-dim);margin-top:-2px;margin-bottom:12px;}
+
+  .hero{
+    background:linear-gradient(135deg, rgba(109,40,217,.14), rgba(6,182,212,.10), rgba(255,255,255,.02));
+    border-color:rgba(109,40,217,.14);
+  }
+  .hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;}
+  .hero-tag{display:inline-flex;align-items:center;gap:7px;font-size:.72rem;font-weight:950;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-2);}
+  .hero h2,.name{margin-top:10px;font-size:clamp(1.4rem,2vw,2rem);font-weight:970;letter-spacing:-.05em;line-height:1.04;}
+  .hero p,.desc,.meta{margin-top:8px;color:var(--text-dim);font-size:.92rem;}
+  .hero-stats,.kpi-grid,.grid-2,.grid-4,.stack,.profile-form,.compose-actions,.toolbar,.chips,.session-actions{display:flex;gap:10px;flex-wrap:wrap;}
+  .hero-stats,.kpi-grid,.grid-2,.grid-4{display:grid;}
+  .hero-stats{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:16px;gap:10px;}
+  .kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+  .grid-2{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+  .grid-4{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}
+  .kpi,.mini-stat,.stat-tile{
+    padding:14px 14px 13px;background:var(--panel-strong);border-radius:22px;border:1px solid var(--line);min-width:0;
+  }
+  .kpi .v,.mini-stat .v,.stat-tile .v{display:block;font-size:1.5rem;font-weight:960;letter-spacing:-.05em;line-height:1;}
+  .kpi .l,.mini-stat .l,.stat-tile .l{display:block;margin-top:4px;font-size:.74rem;color:var(--text-dim);}
+  .chip,.bubble .meta,.notice strong,.day .dow{font-weight:900;}
+  .chip{
+    display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;
+    background:var(--panel-strong);border:1px solid var(--line);color:var(--text-dim);
+  }
+  .chip.active,.chip.good{
+    color:var(--text);background:linear-gradient(135deg, rgba(34,197,94,.12), rgba(6,182,212,.12));border-color:rgba(34,197,94,.18);
+  }
+
+  .day-strip{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scroll-snap-type:x proximity;}
+  .day-strip::-webkit-scrollbar,.tabs::-webkit-scrollbar{display:none;}
+  .day{
+    flex:0 0 auto;width:86px;padding:12px 10px;text-align:center;scroll-snap-align:center;
+    background:var(--panel-strong);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow-soft);
+  }
+  .day.active{background:linear-gradient(135deg, rgba(109,40,217,.14), rgba(6,182,212,.12));border-color:rgba(109,40,217,.18);transform:translateY(-2px);}
+  .day.today{outline:2px solid rgba(34,197,94,.20);}
+  .day .dow{font-size:.69rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);}
+  .day .num{font-size:1.05rem;font-weight:950;margin-top:5px;letter-spacing:-.04em;}
+  .day .dot{width:7px;height:7px;border-radius:99px;margin:8px auto 0;background:transparent;}
+  .day.logged .dot{background:var(--accent-2);}
+
+  .session-card{background:linear-gradient(180deg, rgba(255,255,255,.06), transparent 24%), var(--panel);}
+  .session-head{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:flex-start;margin-bottom:14px;}
+  .session-actions,.toolbar,.chips{align-items:center;}
+  .small-btn,.secondary-btn,.primary-btn,.danger-btn,.link-btn{padding:12px 15px;font-size:.86rem;}
+  .small-btn,.secondary-btn{background:var(--panel-strong);color:var(--text);border:1px solid var(--line);box-shadow:var(--shadow-soft);}
+  .primary-btn{background:linear-gradient(135deg, var(--accent), var(--accent-2));color:white;box-shadow:0 18px 30px rgba(109,40,217,.20);}
+  .danger-btn{background:rgba(239,68,68,.10);color:var(--danger);border:1px solid rgba(239,68,68,.20);}
+  .link-btn{border:none;background:none;color:var(--accent);padding:0;font-weight:900;}
+  .link-btn.danger{color:var(--danger);}
+
+  .exercise{padding:15px;margin-bottom:12px;}
+  .exercise-top{display:grid;gap:10px;align-items:start;margin-bottom:12px;}
+  .exercise-name,.input,.select,.csv,.exercise textarea,
+  .set-input,.chat-compose textarea,.profile-form input,.profile-form textarea,.field input,.field textarea{
+    width:100%;border-radius:18px;border:1px solid var(--line);background:var(--panel-strong);color:var(--text);
+    padding:12px 13px;outline:none;box-shadow:none;
+  }
+  .exercise-name:focus,.input:focus,.select:focus,.csv:focus,.set-input:focus,.chat-compose textarea:focus,.profile-form input:focus,.profile-form textarea:focus,.field input:focus,.field textarea:focus{border-color:rgba(109,40,217,.35);box-shadow:0 0 0 4px rgba(109,40,217,.08)}
+  .exercise-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .timer-btn,.trash-btn,.check{width:auto;height:40px;border-radius:999px;border:1px solid var(--line);background:var(--panel-strong);color:var(--text);padding:0 14px;font-weight:900;}
+  .trash-btn{color:var(--danger);}
+  .check{min-width:40px;padding:0 14px;}
+  .check.done{background:linear-gradient(135deg, var(--accent), var(--accent-2));color:#fff;border-color:transparent;box-shadow:0 14px 26px rgba(109,40,217,.18)}
+  .exercise-badge{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;font-size:.76rem;font-weight:950;}
+  .exercise-badge.ready{background:rgba(34,197,94,.12);color:var(--accent-3);border:1px solid rgba(34,197,94,.18);}
+  .exercise-badge.pending{background:rgba(245,158,11,.12);color:var(--warn);border:1px solid rgba(245,158,11,.18);}
+  .exercise-badge.locked{background:rgba(148,163,184,.14);color:var(--text-dim);border:1px solid rgba(148,163,184,.20);}
+  .sets{display:grid;gap:9px;}
+  .set-row{
+    display:grid;grid-template-columns:34px minmax(0,1fr) 42px minmax(0,1fr) 42px 52px;gap:8px;align-items:center;
+    padding:9px;background:var(--panel-dim);border-radius:20px;border:1px solid transparent;min-width:0;
+  }
+  .set-index{font-family:var(--mono);font-size:.82rem;font-weight:900;color:var(--text-dim);text-align:center;}
+  .set-input{padding:11px 10px;border-radius:14px;text-align:center;font-family:var(--mono);font-weight:900;}
+  .unit{font-family:var(--mono);font-size:.72rem;color:var(--text-faint);text-align:center;}
+  .ex-list{display:grid;gap:12px;}
+  .exercise-tools{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px;}
+  .exercise-name{flex:1 1 auto;min-width:0;}
+  .exercise-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .chart{padding:16px;border-radius:28px;background:var(--panel-strong);border:1px solid var(--line);box-shadow:var(--shadow-soft);}
+  .chart-title{font-size:1rem;font-weight:950;letter-spacing:-.04em;margin-bottom:4px;}
+  .chart-sub{font-size:.86rem;color:var(--text-dim);margin-bottom:10px;}
+  .left{min-width:0;}
+  .mono{font-family:var(--mono);font-size:.82rem;color:var(--text-dim);}
+  .timer-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,.58);backdrop-filter:blur(12px);z-index:250;padding:20px;}
+  .timer-overlay.show{display:flex;}
+  .timer-count{font-size:clamp(2.8rem,8vw,4.6rem);font-weight:950;letter-spacing:-.06em;margin:14px 0;line-height:1;}
+  .timer-bar{height:10px;background:var(--panel-dim);border-radius:999px;overflow:hidden;border:1px solid var(--line);}
+  .timer-bar i{display:block;height:100%;width:0%;border-radius:inherit;background:linear-gradient(135deg, var(--accent), var(--accent-2));transition:width .18s linear;}
+  .flash-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(16px);opacity:0;pointer-events:none;z-index:400;background:var(--panel-strong);color:var(--text);border:1px solid var(--line);border-radius:999px;padding:12px 16px;box-shadow:var(--shadow);transition:opacity .18s ease, transform .18s ease;}
+  .flash-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+
+  .empty{padding:18px;border:1px dashed var(--line);color:var(--text-dim);text-align:center;}
+  .mini-card{padding:14px;border-radius:22px;min-width:0;}
+  .mini-card h4{font-size:.86rem;font-weight:950;letter-spacing:-.03em;margin-bottom:6px;}
+  .mini-card p{font-size:.8rem;color:var(--text-dim);overflow-wrap:anywhere;}
+
+  .analysis-hero{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;align-items:stretch;}
+  .chart-card{padding:16px;}
+  svg{max-width:100%;}
+  .bar-group text,.bar-group{fill:var(--text);}
+  .notice{padding:14px;margin-bottom:12px;background:var(--panel-strong);}
+  .warn{border-color:rgba(245,158,11,.20);background:rgba(245,158,11,.08);}
+  .field{padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0;}
+  .field label{font-size:.78rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);}
+  .profile-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;width:100%;}
+  .stack{display:grid;gap:10px;}
+
+  .chat-shell{display:grid;gap:14px;}
+  .chat-head{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:flex-start;}
+  .chat-body{display:flex;flex-direction:column;gap:10px;max-height:56vh;overflow:auto;padding-right:4px;}
+  .bubble{padding:14px 15px;max-width:920px;white-space:pre-wrap;}
+  .bubble.user{margin-left:auto;background:linear-gradient(135deg, rgba(109,40,217,.16), rgba(6,182,212,.10));}
+  .bubble.assistant{background:var(--panel-strong);}
+  .bubble.system{background:rgba(148,163,184,.10);color:var(--text-dim);}
+  .bubble .meta{display:block;margin-bottom:6px;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);}
+  .chat-compose textarea{min-height:120px;resize:vertical;}
+  .compose-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end;}
+  .compose-actions{justify-content:space-between;align-items:center;}
+
+  .modal{position:fixed;inset:0;background:rgba(2,6,23,.54);backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;padding:20px;z-index:200;}
+  .modal.show{display:flex;}
+  .modal-card{width:min(1120px,100%);max-height:88vh;overflow:auto;padding:18px;}
+  .modal-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:16px;}
+  .modal-close{width:42px;height:42px;border-radius:999px;border:1px solid var(--line);background:var(--panel-strong);color:var(--text);}
+
+  .timer-box{padding:26px;text-align:center;width:min(360px,100%);}
+  .foot{padding:6px 4px 18px;text-align:center;font-size:.76rem;color:var(--text-faint);}
+
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  input[type=number]{appearance:textfield;}
+
+  @media (max-width: 1120px){
+    .app{grid-template-columns:1fr;grid-template-areas:"topbar" "tabs" "views" "foot";}
+    .tabs{position:sticky;top:12px;flex-direction:row;min-height:auto;overflow-x:auto;overflow-y:hidden;white-space:nowrap;}
+    .tab{width:auto;flex:0 0 auto;}
+    .analysis-hero,.profile-form,.grid-2,.grid-4,.hero-stats,.kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  }
+  @media (max-width: 720px){
+    .app{padding:12px;gap:12px;}
+    .topbar{padding:16px;border-radius:26px;align-items:flex-start;flex-direction:column;}
+    .title{max-width:none;font-size:clamp(1.9rem, 8vw, 2.8rem);}
+    .tabs{padding:10px;gap:8px;border-radius:26px;}
+    .tab{padding:12px 14px;font-size:.9rem;}
+    .card,.hero,.session-card,.chat-shell,.analysis-hero,.modal-card,.timer-box{border-radius:24px;padding:14px;}
+    .hero-stats,.kpi-grid,.grid-2,.grid-4,.analysis-hero,.compose-row,.profile-form{grid-template-columns:1fr;}
+    .compose-row{display:flex;flex-direction:column;align-items:stretch;}
+    .set-row{grid-template-columns:28px minmax(0,1fr) 32px minmax(0,1fr) 32px 48px;}
+    .session-head,.chat-head,.hero-top,.modal-head{flex-direction:column;align-items:stretch;}
+    .chat-body{max-height:48vh;}
+  }
+</style>
+
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="eyebrow">TITAN OS • Cortex</div>
+      <div class="title">Performance stack<br>claire, rapide, colorée.</div>
+      <div class="subtitle" id="liveClock">Synchronisation…</div>
+    </div>
+    <div class="top-actions">
+      <button class="pill-btn" id="openSettingsBtn">API & Cortex</button>
+      <button class="icon-btn" id="themeBtn" aria-label="Changer le thème">☾</button>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-tab="home">Accueil</button>
+    <button class="tab" data-tab="program">Programme</button>
+    <button class="tab" data-tab="cortex">Cortex</button>
+    <button class="tab" data-tab="analysis">Analyse</button>
+    <button class="tab" data-tab="nutrition">Nutrition</button>
+    <button class="tab" data-tab="profile">Profil</button>
+    <button class="tab" data-tab="data">Données</button>
+  </div>
+
+  <div class="views">
+    <section id="home" class="view active"></section>
+    <section id="program" class="view"></section>
+    <section id="cortex" class="view"></section>
+    <section id="analysis" class="view"></section>
+    <section id="nutrition" class="view"></section>
+    <section id="profile" class="view"></section>
+    <section id="data" class="view"></section>
+  </div>
+
+  <p class="foot">TITAN OS — système de coaching minimaliste, Cortex + API</p>
+</div>
+
+<div class="modal" id="settingsModal" aria-hidden="true">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div>
+        <div class="section-title" style="margin-bottom:4px">API & Cortex</div>
+        <div class="section-sub">Les clés restent dans le navigateur. Pour la production, passe par un backend proxy.</div>
+      </div>
+      <button class="modal-close" id="closeSettingsBtn">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="notice warn">
+        <strong>Groq :</strong> modèle par défaut <code>llama-3.1-8b-instant</code>.  
+        <strong>Gemini :</strong> modèle par défaut <code>gemini-3.1-flash-lite</code>, le plus économique de la gamme Gemini exposée dans la doc officielle.
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Provider Cortex</label>
+          <select id="providerSelect" class="select">
+            <option value="auto">Auto (Groq puis Gemini)</option>
+            <option value="groq">Groq</option>
+            <option value="gemini">Gemini</option>
+            <option value="local">Local uniquement</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Modèle Groq</label>
+          <select id="groqModelSelect" class="select">
+            <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant</option>
+            <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Clé API Groq</label>
+          <input id="groqKeyInput" class="input" type="password" placeholder="gsk_...">
+        </div>
+        <div class="field">
+          <label>Modèle Gemini</label>
+          <select id="geminiModelSelect" class="select">
+            <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite</option>
+            <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+            <option value="gemini-3.1-flash">Gemini 3.1 Flash</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Clé API Gemini</label>
+          <input id="geminiKeyInput" class="input" type="password" placeholder="AIza...">
+        </div>
+        <div class="field">
+          <label>Langue de réponse</label>
+          <select id="languageSelect" class="select">
+            <option value="fr">Français</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Ton Cortex</label>
+          <select id="toneSelect" class="select">
+            <option value="coach">Coach direct</option>
+            <option value="analyst">Analyste</option>
+            <option value="support">Supportif</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Temps max de réponse (sec)</label>
+          <input id="timeoutInput" class="input" type="number" min="10" max="90" step="1">
+        </div>
+      </div>
+      <div class="toolbar">
+        <button class="primary-btn" id="saveSettingsBtn">Enregistrer</button>
+        <button class="secondary-btn" id="resetKeysBtn">Effacer les clés</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="timer-overlay" id="timerOverlay" aria-hidden="true">
+  <div class="timer-box">
+    <h3 id="timerName">Repos</h3>
+    <p id="timerSub">Temps de repos</p>
+    <div class="timer-count" id="timerCount">00:00</div>
+    <div class="timer-bar"><i id="timerFill"></i></div>
+    <div class="toolbar" style="justify-content:center;margin-top:18px">
+      <button class="secondary-btn" id="closeTimerBtn">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'titan_os_cortex_v2';
+const LEGACY_STORAGE_KEYS = ['titan_os_v4_apple', 'titan_os_cortex_v1'];
+const DEFAULT_SETTINGS = {
+  theme: 'light',
+  provider: 'auto',
+  groqModel: 'llama-3.1-8b-instant',
+  geminiModel: 'gemini-3.1-flash-lite',
+  groqKey: '',
+  geminiKey: '',
+  language: 'fr',
+  tone: 'coach',
+  timeout: 45
+};
+
+const WEEK_TEMPLATE = {
+  1: { type:'train', name:'Haut du corps A', color:'mon', exercises:[
+    {name:'Chest Press', sets:[{reps:10, weight:0, done:false},{reps:10, weight:0, done:false},{reps:10, weight:0, done:false}], rest:90},
+    {name:'Tirage vertical', sets:[{reps:10, weight:0, done:false},{reps:10, weight:0, done:false},{reps:10, weight:0, done:false}], rest:90},
+    {name:'Pec Deck', sets:[{reps:15, weight:0, done:false},{reps:15, weight:0, done:false}], rest:60},
+    {name:'Rowing assis', sets:[{reps:12, weight:0, done:false},{reps:12, weight:0, done:false}], rest:90},
+    {name:'Élévations latérales', sets:[{reps:15, weight:0, done:false},{reps:15, weight:0, done:false},{reps:15, weight:0, done:false}], rest:60},
+    {name:'Face Pull', sets:[{reps:15, weight:0, done:false},{reps:15, weight:0, done:false},{reps:15, weight:0, done:false}], rest:60},
+    {name:'Gainage', sets:[{reps:30, weight:0, done:false},{reps:30, weight:0, done:false},{reps:30, weight:0, done:false}], rest:45}
+  ]},
+  2: { type:'train', name:'Bas du corps A', color:'tue', exercises:[
+    {name:'Presse à cuisses', sets:[{reps:12, weight:0, done:false},{reps:12, weight:0, done:false},{reps:12, weight:0, done:false}], rest:90},
+    {name:'Leg Extension', sets:[{reps:15, weight:0, done:false},{reps:15, weight:0, done:false},{reps:15, weight:0, done:false}], rest:60},
+    {name:'Leg Curl', sets:[{reps:15, weight:0, done:false},{reps:15, weight:0, done:false},{reps:15, weight:0, done:false}], rest:60},
+    {name:'Mollets', sets:[{reps:20, weight:0, done:false},{reps:20, weight:0, done:false}], rest:45},
+    {name:'Abdos bas', sets:[{reps:15, weight:0, done:false},{reps:15, weight:0, done:false},{reps:15, weight:0, done:false}], rest:45},
+    {name:'🚶 Marche inclinée', sets:[{reps:30, weight:0, done:false}], rest:0}
+  ]},
+  3: { type:'rest', name:'Repos complet', color:'wed', note:'Étirements légers si envie.'},
+  4: { type:'train', name:'Haut du corps B', color:'thu', exercises:[
+    {name:'Dips assistés', sets:[{reps:10, weight:0, done:false},{reps:10, weight:0, done:false},{reps:10, weight:0, done:false}], rest:75},
+    {name:'Tirage vertical prise neutre', sets:[{reps:10, weight:0, done:false},{reps:10, weight:0, done:false},{reps:10, weight:0, done:false}], rest:90},
+    {name:'Écartés poulie', sets:[{reps:15, weight:0, done:false},{reps:15, weight:0, done:false},{reps:15, weight:0, done:false}], rest:60},
+    {name:'Rowing assis', sets:[{reps:12, weight:0, done:false},{reps:12, weight:0, done:false}], rest:90},
+    {name:'Reverse Pec Deck', sets:[{reps:15, weight:0, done:false},{reps:15, weight:0, done:false},{reps:15, weight:0, done:false}], rest:60},
+    {name:'Gainage', sets:[{reps:30, weight:0, done:false},{reps:30, weight:0, done:false},{reps:30, weight:0, done:false}], rest:45}
+  ]},
+  5: { type:'train', name:'Bas du corps B', color:'fri', exercises:[
+    {name:'Presse à cuisses', sets:[{reps:12, weight:0, done:false},{reps:12, weight:0, done:false},{reps:12, weight:0, done:false}], rest:90},
+    {name:'Leg Curl', sets:[{reps:15, weight:0, done:false},{reps:15, weight:0, done:false}], rest:60},
+    {name:'Adducteurs', sets:[{reps:15, weight:0, done:false},{reps:15, weight:0, done:false},{reps:15, weight:0, done:false}], rest:60},
+    {name:'Abducteurs', sets:[{reps:15, weight:0, done:false},{reps:15, weight:0, done:false},{reps:15, weight:0, done:false}], rest:60},
+    {name:'Mollets', sets:[{reps:20, weight:0, done:false},{reps:20, weight:0, done:false}], rest:45},
+    {name:'Crunch machine', sets:[{reps:15, weight:0, done:false},{reps:15, weight:0, done:false},{reps:15, weight:0, done:false}], rest:45},
+    {name:'🚶 Marche inclinée', sets:[{reps:30, weight:0, done:false}], rest:0}
+  ]},
+  6: { type:'train', name:'Bras + Épaules + Tractions', color:'sat', exercises:[
+    {name:'Shoulder Press', sets:[{reps:12, weight:0, done:false},{reps:12, weight:0, done:false},{reps:12, weight:0, done:false},{reps:12, weight:0, done:false}], rest:90},
+    {name:'Élévations latérales', sets:[{reps:15, weight:0, done:false},{reps:15, weight:0, done:false},{reps:15, weight:0, done:false}], rest:60},
+    {name:'Reverse Pec Deck', sets:[{reps:15, weight:0, done:false},{reps:15, weight:0, done:false}], rest:60},
+    {name:'Curl biceps', sets:[{reps:12, weight:0, done:false},{reps:12, weight:0, done:false},{reps:12, weight:0, done:false}], rest:60},
+    {name:'Triceps poulie', sets:[{reps:15, weight:0, done:false},{reps:15, weight:0, done:false},{reps:15, weight:0, done:false}], rest:60},
+    {name:'Curl pupitre', sets:[{reps:12, weight:0, done:false},{reps:12, weight:0, done:false}], rest:60},
+    {name:'Extension triceps overhead', sets:[{reps:15, weight:0, done:false},{reps:15, weight:0, done:false}], rest:60},
+    {name:'🤸‍♂️ Tractions assistées', sets:[{reps:8, weight:0, done:false},{reps:8, weight:0, done:false},{reps:8, weight:0, done:false}], rest:90},
+    {name:'🤸‍♂️ Tractions négatives', sets:[{reps:6, weight:0, done:false},{reps:6, weight:0, done:false}], rest:90},
+    {name:'🚶 Marche inclinée', sets:[{reps:30, weight:0, done:false}], rest:0}
+  ]},
+  0: { type:'rest', name:'Repos (par défaut)', color:'sun', note:'Non précisé dans ta liste — repos par défaut.'}
+};
+
+const DAY_NAMES = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+const SHORT_DAY = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const DAY_KEYS = ['sun','mon','tue','wed','thu','fri','sat'];
+const PROFILE_FIELDS = {
+  height: '1,935 m',
+  weight: '83,5 kg',
+  bodyFat: '≈11 %',
+  ageBone: '+1,5 an',
+  sleep: '≈8 h',
+  split: 'Haut/Bas ×2 + Bras-Épaules',
+  mobility: 'Bonne base, surveiller épaules',
+  objective: 'Masse propre + force relative'
+};
+
+const state = {
+  ...DEFAULT_SETTINGS,
+  selectedDate: todayISO(),
+  logs: {},
+  drafts: {},
+  profile: {...PROFILE_FIELDS},
+  cortexMessages: [
+    {role:'assistant', content:"Salut. Je suis Cortex, ton assistant coaching. Je peux analyser tes séances, ton historique, ta morphologie et tes objectifs."}
+  ]
+};
+
+function deepClone(v){ return JSON.parse(JSON.stringify(v)); }
+function todayISO(){
+  const d = new Date();
+  const tz = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - tz).toISOString().split('T')[0];
+}
+function toISODate(d){
+  const tz = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - tz).toISOString().split('T')[0];
+}
+function fromISO(s){
+  const [y,m,d] = String(s||'').split('-').map(Number);
+  return new Date(y || 2000, (m||1)-1, d||1);
+}
+function weekStart(date){
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const dow = (d.getDay() + 6) % 7;
+  d.setDate(d.getDate() - dow);
+  d.setHours(0,0,0,0);
+  return d;
+}
+function weekRange(date){
+  const s = weekStart(date);
+  const e = new Date(s);
+  e.setDate(s.getDate()+6);
+  return {start:s, end:e};
+}
+function weekKey(dateStr){ return toISODate(weekStart(fromISO(dateStr))); }
+function escapeHtml(str){
+  return String(str ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");
+}
+function fmtDate(dateStr){
+  const d = fromISO(dateStr);
+  return `${DAY_NAMES[d.getDay()]} ${d.getDate()} ${d.toLocaleDateString('fr-FR',{month:'short'})}`;
+}
+function save(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+function saveState(){ save(); }
+
+let __flashStatusTimer = null;
+function flashStatus(message){
+  let el = document.getElementById('flashToast');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'flashToast';
+    el.className = 'flash-toast';
+    document.body.appendChild(el);
+  }
+  el.textContent = String(message ?? '');
+  el.classList.add('show');
+  clearTimeout(__flashStatusTimer);
+  __flashStatusTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+function load(){
+  try{
+    let raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw){
+      for(const legacyKey of LEGACY_STORAGE_KEYS){
+        const legacy = localStorage.getItem(legacyKey);
+        if(legacy){ raw = legacy; break; }
+      }
+    }
+    if(raw){
+      const parsed = JSON.parse(raw);
+      Object.assign(state, DEFAULT_SETTINGS, parsed);
+      state.profile = {...PROFILE_FIELDS, ...(parsed.profile || {})};
+      state.cortexMessages = Array.isArray(parsed.cortexMessages) && parsed.cortexMessages.length
+        ? parsed.cortexMessages
+        : state.cortexMessages;
+      state.logs = parsed.logs || {};
+      state.drafts = parsed.drafts || {};
+      save();
+    }
+  }catch(e){}
+  if(!state.profile || !state.profile.height) state.profile = {...PROFILE_FIELDS};
+  applyTheme();
+}
+function applyTheme(){
+  document.body.dataset.theme = state.theme || 'light';
+  document.getElementById('themeBtn').textContent = state.theme === 'dark' ? '☀︎' : '☾';
+}
+function setTheme(theme){
+  state.theme = theme;
+  applyTheme(); save(); renderAll();
+}
+function defaultSession(dateStr){
+  return deepClone(WEEK_TEMPLATE[fromISO(dateStr).getDay()]);
+}
+function normalizeExercise(ex){
+  const clean = deepClone(ex || {});
+  clean.name = String(clean.name || 'Nouvel exercice');
+  clean.rest = Number(clean.rest ?? 90);
+  clean.sets = Array.isArray(clean.sets) && clean.sets.length ? clean.sets : [{reps:10, weight:0, done:false}];
+  clean.sets = clean.sets.map(s => ({
+    reps: s.reps === '' || s.reps === null || s.reps === undefined ? '' : Number(s.reps),
+    weight: s.weight === '' || s.weight === null || s.weight === undefined ? '' : Number(s.weight),
+    done: !!s.done
+  }));
+  return clean;
+}
+function normalizeSession(session, dateStr){
+  const base = deepClone(session || defaultSession(dateStr));
+  base.type = base.type === 'rest' ? 'rest' : 'train';
+  base.name = String(base.name || (base.type === 'rest' ? 'Repos' : 'Séance'));
+  base.color = base.color || WEEK_TEMPLATE[fromISO(dateStr).getDay()].color;
+  if(base.type === 'train') base.exercises = Array.isArray(base.exercises) ? base.exercises.map(normalizeExercise) : [];
+  else base.note = String(base.note || '');
+  return base;
+}
+function getSessionRecord(dateStr){
+  if(state.logs[dateStr]) return {data: normalizeSession(state.logs[dateStr], dateStr), source:'logged'};
+  if(state.drafts[dateStr]) return {data: normalizeSession(state.drafts[dateStr], dateStr), source:'draft'};
+  return {data: normalizeSession(defaultSession(dateStr), dateStr), source:'template'};
+}
+function ensureDraft(dateStr){
+  if(!state.drafts[dateStr]){
+    state.drafts[dateStr] = deepClone(getSessionRecord(dateStr).data);
+    save();
+  }
+  return state.drafts[dateStr];
+}
+function mutateDraft(dateStr, fn){
+  const draft = ensureDraft(dateStr);
+  fn(draft);
+  state.drafts[dateStr] = normalizeSession(draft, dateStr);
+  save();
+  renderAll();
+}
+function currentWeekDoneCount(){
+  const {start, end} = weekRange(new Date());
+  const s = toISODate(start), e = toISODate(end);
+  return Object.entries(state.logs).filter(([d, session]) => d >= s && d <= e && session?.type === 'train').length;
+}
+function weeklyCounts(){
+  const counts = {};
+  for(const [d, session] of Object.entries(state.logs)){
+    if(session?.type !== 'train') continue;
+    const k = weekKey(d);
+    counts[k] = (counts[k] || 0) + 1;
+  }
+  return counts;
+}
+function computeStreak(){
+  const counts = weeklyCounts();
+  let cursor = weekStart(new Date());
+  let streak = 0;
+  for(let i=0;i<52;i++){
+    const k = toISODate(cursor);
+    if((counts[k] || 0) >= 5) streak++;
+    else break;
+    cursor.setDate(cursor.getDate()-7);
+  }
+  return streak;
+}
+function workoutTotals(session){
+  const exercises = session?.exercises || [];
+  const totalSets = exercises.reduce((s, ex) => s + (ex.sets?.length || 0), 0);
+  const doneSets = exercises.reduce((s, ex) => s + (ex.sets || []).filter(x => x.done).length, 0);
+  const volume = exercises.reduce((s, ex) => s + (ex.sets || []).reduce((a, set) => a + (Number(set.weight || 0) * Number(set.reps || 0)), 0), 0);
+  const rest = exercises.reduce((s, ex) => s + Number(ex.rest || 0), 0);
+  return {exerciseCount: exercises.length, totalSets, doneSets, volume, rest};
+}
+function getMuscleMap(){
+  const map = {
+    Dos:0, Épaules:0, Pectoraux:0, Quadriceps:0, Biceps:0, Triceps:0, Ischios:0, Mollets:0, Core:0
+  };
+  const labels = [
+    ['Chest Press','Pectoraux'],['Dips','Pectoraux'],['Pec Deck','Pectoraux'],['Écartés','Pectoraux'],
+    ['Tirage','Dos'],['Rowing','Dos'],['Face Pull','Épaules'],['Reverse Pec Deck','Épaules'],
+    ['Élévations','Épaules'],['Shoulder Press','Épaules'],
+    ['Presse','Quadriceps'],['Leg Extension','Quadriceps'],['Leg Curl','Ischios'],['Adducteurs','Ischios'],
+    ['Abducteurs','Ischios'],['Mollets','Mollets'],['Curl biceps','Biceps'],['Curl pupitre','Biceps'],
+    ['Triceps','Triceps'],['Extension triceps','Triceps'],['Gainage','Core'],['Crunch','Core'],['Abdos','Core']
+  ];
+  const all = {...state.logs, ...state.drafts};
+  for(const session of Object.values(all)){
+    if(session?.type !== 'train') continue;
+    for(const ex of session.exercises || []){
+      const match = labels.find(([k]) => String(ex.name || '').toLowerCase().includes(k.toLowerCase()));
+      if(match){
+        map[match[1]] += (ex.sets || []).length;
+      }
+    }
+  }
+  return map;
+}
+function getLastSessions(n=6){
+  const items = Object.entries(state.logs)
+    .filter(([,s]) => s?.type === 'train')
+    .sort((a,b) => a[0].localeCompare(b[0]))
+    .slice(-n)
+    .map(([date, s]) => ({date, ...s, ...workoutTotals(s)}));
+  return items;
+}
+function getUpcomingSessions(n=6){
+  const items = Object.entries(state.drafts)
+    .sort((a,b) => a[0].localeCompare(b[0]))
+    .slice(0, n)
+    .map(([date, s]) => ({date, ...s, ...workoutTotals(s)}));
+  if(!items.length){
+    const today = fromISO(todayISO());
+    for(let i=0;i<n;i++){
+      const d = new Date(today);
+      d.setDate(today.getDate()+i);
+      const dateStr = toISODate(d);
+      const rec = getSessionRecord(dateStr).data;
+      items.push({date:dateStr, ...rec, ...workoutTotals(rec), planned:true});
+    }
+  }
+  return items;
+}
+function buildCortexContext(){
+  const {start, end} = weekRange(new Date());
+  const recent = getLastSessions(10).map(s => ({
+    date:s.date,
+    name:s.name,
+    sets:s.totalSets,
+    exercises:s.exerciseCount,
+    volume:s.volume,
+    rest:s.rest,
+    type:s.type
+  }));
+  const future = getUpcomingSessions(10).map(s => ({
+    date:s.date,
+    name:s.name,
+    sets:s.totalSets,
+    exercises:s.exerciseCount,
+    type:s.type
+  }));
+  const profile = state.profile || {};
+  const weekDone = currentWeekDoneCount();
+  const streak = computeStreak();
+  const muscleMap = getMuscleMap();
+  const sortedMuscles = Object.entries(muscleMap).sort((a,b)=>b[1]-a[1]);
+  return [
+    `Tu es Cortex, le coach IA personnel dans TITAN OS.`,
+    `Réponds en ${state.language === 'en' ? 'English' : 'français'} avec un ton ${state.tone}.`,
+    `Tu as accès à l'historique des séances passées, aux brouillons et aux séances planifiées.`,
+    `Objectif: analyser les séances, la morphologie, la récupération et donner des recommandations concrètes, prudentes et utiles.`,
+    ``,
+    `MORPHOLOGIE / PROFIL:`,
+    JSON.stringify(profile, null, 2),
+    ``,
+    `RÉSUMÉ SEMAINE COURANTE:`,
+    JSON.stringify({
+      range:[toISODate(start), toISODate(end)],
+      completedWorkouts: weekDone,
+      streakWeeksOver5Workouts: streak,
+      muscleVolume: sortedMuscles
+    }, null, 2),
+    ``,
+    `SÉANCES PASSÉES RÉCENTES:`,
+    JSON.stringify(recent, null, 2),
+    ``,
+    `SÉANCES FUTURES / BROUILLONS:`,
+    JSON.stringify(future, null, 2),
+    ``,
+    `Consignes:`,
+    `- cite les éléments utiles du contexte fourni`,
+    `- propose un plan d'action clair`,
+    `- si la question touche à la santé / douleur / blessure, recommande la prudence et l'avis d'un pro de santé`,
+    `- si une donnée manque, dis ce qu'il manque plutôt que d'inventer`
+  ].join('\n');
+}
+function parseAssistantText(raw){
+  if(!raw) return '';
+  if(typeof raw === 'string') return raw;
+  if(raw.text) return raw.text;
+  return JSON.stringify(raw, null, 2);
+}
+function localCoachReply(userText){
+  const txt = String(userText || '').toLowerCase();
+  const weekDone = currentWeekDoneCount();
+  const streak = computeStreak();
+  const last = getLastSessions(1)[0];
+  const profile = state.profile || {};
+  let reply = `Analyse locale: tu as fait ${weekDone} séance(s) cette semaine, avec ${streak} semaine(s) à ≥5 séances.`;
+  if(last){
+    reply += ` Dernière séance: ${last.name} (${fmtDate(last.date)}), ${last.exerciseCount} exercices, ${last.totalSets} séries, volume estimé ${Math.round(last.volume)}.`;
+  }
+  if(txt.includes('poids') || txt.includes('weight')) reply += ` Ton poids de référence est ${profile.weight || 'non renseigné'}.`;
+  if(txt.includes('morph') || txt.includes('taille') || txt.includes('body')) reply += ` Morphologie: ${profile.height || ''}, ${profile.bodyFat || ''}, split ${profile.split || ''}.`;
+  if(txt.includes('programme') || txt.includes('séance') || txt.includes('session')) reply += ` Je peux aussi comparer tes séances passées avec tes séances futures pour repérer les écarts de volume et de fréquence.`;
+  return reply + `\n\nPasse une clé Groq ou Gemini dans API & Cortex pour obtenir une réponse IA complète.`;
+}
+async function groqChat(messages){
+  if(!state.groqKey) throw new Error('Clé Groq manquante');
+  const body = {
+    model: state.groqModel || 'llama-3.1-8b-instant',
+    messages,
+    temperature: 0.35,
+    max_tokens: 900
+  };
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method:'POST',
+    headers:{
+      'Authorization': `Bearer ${state.groqKey}`,
+      'Content-Type':'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+  if(!res.ok) throw new Error(`Groq ${res.status}`);
+  const data = await res.json();
+  return data?.choices?.[0]?.message?.content || '';
+}
+async function geminiChat(messages, systemInstruction){
+  if(!state.geminiKey) throw new Error('Clé Gemini manquante');
+  const contents = messages.map(m => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{text: String(m.content || '')}]
+  }));
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(state.geminiModel || 'gemini-3.1-flash-lite')}:generateContent`;
+  const body = {
+    systemInstruction: {parts:[{text: systemInstruction}]},
+    contents,
+    generationConfig: {temperature: 0.35, maxOutputTokens: 900}
+  };
+  const res = await fetch(url, {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-goog-api-key': state.geminiKey
+    },
+    body: JSON.stringify(body)
+  });
+  if(!res.ok) throw new Error(`Gemini ${res.status}`);
+  const data = await res.json();
+  const cand = data?.candidates?.[0];
+  const parts = cand?.content?.parts || [];
+  return parts.map(p => p.text || '').join('').trim();
+}
+async function askCortex(userText){
+  const system = buildCortexContext();
+  const transcript = state.cortexMessages.slice(-10).map(m => ({role:m.role, content:m.content}));
+  const messages = [...transcript, {role:'user', content:userText}];
+  const provider = state.provider || 'auto';
+  if(provider === 'local') return localCoachReply(userText);
+
+  if(provider === 'groq'){
+    return groqChat([{role:'system', content: system}, ...messages]);
+  }
+  if(provider === 'gemini'){
+    return geminiChat(messages, system);
+  }
+
+  try{
+    return await groqChat([{role:'system', content: system}, ...messages]);
+  }catch(e1){
+    try{
+      return await geminiChat(messages, system);
+    }catch(e2){
+      return localCoachReply(userText);
+    }
+  }
+}
+function renderTabs(){
+  const today = todayISO();
+  const current = state.selectedDate || today;
+  const wrap = document.createElement('div');
+  let html = '';
+  for(let i=-15;i<=30;i++){
+    const d = new Date();
+    d.setDate(d.getDate()+i);
+    const dateStr = toISODate(d);
+    const selected = dateStr === current;
+    const isToday = dateStr === today;
+    const isLogged = !!state.logs[dateStr];
+    html += `<div class="day ${selected?'active':''} ${isToday?'today':''} ${isLogged?'logged':''}" data-date="${dateStr}">
+      <div class="n">${SHORT_DAY[d.getDay()]}</div>
+      <div class="d">${d.getDate()}</div>
+      <div class="dot"></div>
+    </div>`;
+  }
+  return html;
+}
+function renderHome(){
+  const session = getSessionRecord(todayISO()).data;
+  const totals = workoutTotals(session);
+  const weekDone = currentWeekDoneCount();
+  const streak = computeStreak();
+  const last = getLastSessions(1)[0];
+  document.getElementById('home').innerHTML = `
+    <div class="hero">
+      <div class="hero-top">
+        <div class="hero-copy">
+          <div class="hero-tag">Dashboard intelligent</div>
+          <h2>Ta performance, ton historique et ta morphologie dans une seule surface de contrôle.</h2>
+          <p>Design minimaliste, accent coloré, et Cortex pour analyser tes séances passées et futures avec le contexte physique complet.</p>
+        </div>
+        <div class="toolbar">
+          <span class="chip good">${weekDone}/5 séances cette semaine</span>
+          <span class="chip">${streak} semaine(s) de régularité</span>
+          <span class="chip">${fmtDate(todayISO())}</span>
+        </div>
+      </div>
+      <div class="hero-stats">
+        <div class="mini-stat"><span class="v">${totals.exerciseCount}</span><span class="l">Exercices aujourd'hui</span></div>
+        <div class="mini-stat"><span class="v">${totals.totalSets}</span><span class="l">Séries prévues</span></div>
+        <div class="mini-stat"><span class="v">${Math.max(0, Math.round(totals.rest/60))} min</span><span class="l">Repos cumulé</span></div>
+        <div class="mini-stat"><span class="v">${Math.round(last?.volume || 0)}</span><span class="l">Volume dernière séance</span></div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="kpi-grid">
+        <div class="kpi"><div class="v">${state.profile.height || '—'}</div><div class="l">Taille</div></div>
+        <div class="kpi"><div class="v">${state.profile.weight || '—'}</div><div class="l">Poids</div></div>
+        <div class="kpi"><div class="v">${state.profile.bodyFat || '—'}</div><div class="l">Masse grasse</div></div>
+      </div>
+      <div class="card" style="grid-column:span 12">
+        <div class="section-title">Prochaine séance</div>
+        <div class="section-sub">Accès instantané à la séance du jour, à l’éditeur et au timer de repos.</div>
+        <div class="chips">
+          <button class="chip active" data-jump="program">Ouvrir Programme</button>
+          <button class="chip" data-jump="cortex">Parler à Cortex</button>
+          <button class="chip" data-jump="analysis">Voir l’analyse</button>
+        </div>
+      </div>
+      <div class="card" style="grid-column:span 12">
+        <div class="section-title">Dernière séance archivée</div>
+        ${last ? `
+          <div class="grid-4">
+            <div class="mini-card"><h4>${escapeHtml(last.name)}</h4><p>${fmtDate(last.date)}</p></div>
+            <div class="mini-card"><h4>${last.exerciseCount} exercices</h4><p>${last.totalSets} séries</p></div>
+            <div class="mini-card"><h4>${Math.round(last.volume)}</h4><p>Volume estimé</p></div>
+            <div class="mini-card"><h4>${Math.max(0, Math.round(last.rest/60))} min</h4><p>Repos total</p></div>
+          </div>
+        ` : '<div class="empty">Aucune séance archivée pour le moment.</div>'}
+      </div>
+    </div>`;
+}
+function renderProgram(){
+  const rec = getSessionRecord(state.selectedDate);
+  const session = rec.data;
+  const locked = rec.source === 'logged';
+  const totals = workoutTotals(session);
+  const today = todayISO();
+  let sessionHtml = '';
+  if(session.type === 'rest'){
+    sessionHtml = `<div class="empty" style="margin-top:12px">${escapeHtml(session.note || 'Repos.')}</div>`;
+  } else {
+    sessionHtml = `<div class="session-card">
+      <div class="session-head">
+        <div>
+          <div class="hero-tag">${state.selectedDate === today ? 'AUJOURD’HUI' : fmtDate(state.selectedDate)} • ${locked ? 'ARCHIVÉE' : (rec.source === 'draft' ? 'BROUILLON' : 'MODÈLE')}</div>
+          <div class="name">${escapeHtml(session.name)}</div>
+          <div class="meta">${totals.exerciseCount} exercices • ${totals.totalSets} séries • ${Math.max(0, Math.round(totals.rest/60))} min de repos</div>
+        </div>
+        <div class="session-actions">
+          <button class="small-btn" data-action="duplicate-day" data-date="${state.selectedDate}">Dupliquer</button>
+          <button class="small-btn" data-action="save-draft" data-date="${state.selectedDate}">Brouillon</button>
+          ${locked ? `<button class="small-btn" data-action="unlock-session" data-date="${state.selectedDate}">Déverrouiller</button>` : `<button class="primary-btn" data-action="commit-session" data-date="${state.selectedDate}">Archiver</button>`}
+        </div>
+      </div>
+      <div class="ex-list">
+        ${session.exercises.length ? session.exercises.map((ex, exIndex) => `
+          <div class="exercise">
+            <div class="exercise-top">
+              <input class="exercise-name" value="${escapeHtml(ex.name)}" data-action="exercise-name" data-date="${state.selectedDate}" data-ex="${exIndex}" ${locked ? 'readonly' : ''}>
+              <div class="exercise-meta">
+                ${!locked ? `<button class="timer-btn" data-action="start-timer" data-rest="${Number(ex.rest || 90)}" data-name="${escapeHtml(ex.name)}">⏱ ${Number(ex.rest || 90)}s</button>` : ''}
+                ${!locked ? `<button class="trash-btn" data-action="delete-ex" data-date="${state.selectedDate}" data-ex="${exIndex}">✕</button>` : ''}
+              </div>
+            </div>
+            <div class="sets">
+              ${ex.sets.map((set, setIndex) => `
+                <div class="set-row">
+                  <div class="set-index">${setIndex+1}</div>
+                  <input class="set-input" type="number" step="1" inputmode="numeric" value="${set.reps ?? ''}"
+                    data-action="set-field" data-field="reps" data-date="${state.selectedDate}" data-ex="${exIndex}" data-set="${setIndex}" ${locked ? 'readonly' : ''}>
+                  <div class="unit">reps</div>
+                  <input class="set-input" type="number" step="0.5" inputmode="decimal" value="${set.weight ?? ''}"
+                    data-action="set-field" data-field="weight" data-date="${state.selectedDate}" data-ex="${exIndex}" data-set="${setIndex}" ${locked ? 'readonly' : ''}>
+                  <div class="unit">kg</div>
+                  <button class="check ${set.done ? 'done' : ''}" data-action="toggle-set" data-date="${state.selectedDate}" data-ex="${exIndex}" data-set="${setIndex}" ${locked ? 'disabled' : ''}>✓</button>
+                </div>
+              `).join('')}
+            </div>
+            ${!locked ? `
+            <div class="exercise-tools">
+              <button class="link-btn" data-action="add-set" data-date="${state.selectedDate}" data-ex="${exIndex}">+ Ajouter une série</button>
+              <button class="link-btn danger" data-action="remove-set" data-date="${state.selectedDate}" data-ex="${exIndex}">− Retirer la dernière</button>
+            </div>` : ''}
+          </div>
+        `).join('') : '<div class="empty">Aucun exercice dans cette séance.</div>'}
+      </div>
+      ${!locked ? `
+        <div class="toolbar" style="padding:0 16px 16px">
+          <button class="secondary-btn" data-action="add-ex" data-date="${state.selectedDate}">+ Ajouter un exercice</button>
+        </div>` : ''}
+    </div>`;
+  }
+
+  document.getElementById('program').innerHTML = `
+    <div class="card">
+      <div class="section-title">Sélecteur de jour</div>
+      <div class="section-sub">Navigue entre les modèles, brouillons et séances archivées. La séance du jour reste éditable tant qu’elle n’est pas archivée.</div>
+      <div class="day-strip" id="dayStrip">${renderTabs()}</div>
+    </div>
+    ${sessionHtml}
+  `;
+}
+function renderCortex(){
+  const settingsHint = state.provider === 'local'
+    ? 'Mode local actif. Cortex répond avec une analyse heuristique basée sur tes données.'
+    : `Provider ${state.provider === 'auto' ? 'Auto (Groq puis Gemini)' : state.provider.toUpperCase()}.`;
+  document.getElementById('cortex').innerHTML = `
+    <div class="chat-shell">
+      <div class="chat-head">
+        <div class="left">
+          <div class="hero-tag">Cortex</div>
+          <div class="name">Chatbot coaching avec mémoire physique</div>
+          <div class="desc">Cortex lit tes séances passées, tes brouillons et tes séances futures, puis répond à partir de ta morphologie, de ton volume et de ta régularité.</div>
+        </div>
+        <div class="toolbar">
+          <span class="chip">${settingsHint}</span>
+          <button class="chip" data-action="insert-summary">Insérer le résumé</button>
+          <button class="chip" data-action="clear-chat">Vider</button>
+        </div>
+      </div>
+      <div class="chat-body" id="chatBody">
+        ${state.cortexMessages.map(m => `
+          <div class="bubble ${m.role}">
+            <span class="meta">${m.role === 'user' ? 'Toi' : (m.role === 'assistant' ? 'Cortex' : 'Système')}</span>
+            ${escapeHtml(m.content)}
+          </div>
+        `).join('')}
+      </div>
+      <div class="chat-compose">
+        <div class="chips">
+          <button class="chip" data-suggest="Analyse ma dernière séance et dis-moi ce qui manque.">Analyse dernière séance</button>
+          <button class="chip" data-suggest="Compare mes séances passées avec mon programme futur et repère les déséquilibres.">Comparer passé/futur</button>
+          <button class="chip" data-suggest="Analyse ma morphologie et propose un ajustement de volume." >Morphologie</button>
+          <button class="chip" data-suggest="Donne-moi un avis sur ma récupération et la semaine actuelle.">Récupération</button>
+        </div>
+        <div class="compose-row">
+          <textarea id="cortexInput" placeholder="Pose ta question à Cortex…"></textarea>
+          <button class="primary-btn" id="sendCortexBtn">Envoyer</button>
+        </div>
+        <div class="compose-actions">
+          <div class="mono">Contexte: séances passées + futures + morphologie + objectifs + volume hebdo.</div>
+          <div class="toolbar">
+            <button class="secondary-btn" data-action="open-settings-from-cortex">API & Cortex</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  const body = document.getElementById('chatBody');
+  body.scrollTop = body.scrollHeight;
+}
+function renderAnalysis(){
+  const weekDone = currentWeekDoneCount();
+  const streak = computeStreak();
+  const last = getLastSessions(1)[0];
+  const muscleMap = getMuscleMap();
+  const maxMuscle = Math.max(...Object.values(muscleMap), 1);
+  const avgSleep = state.profile.sleep || '—';
+  const profileScore = [
+    state.profile.height ? 1 : 0,
+    state.profile.weight ? 1 : 0,
+    state.profile.bodyFat ? 1 : 0,
+    state.profile.split ? 1 : 0
+  ].reduce((a,b)=>a+b,0) / 4 * 100;
+  const load = Object.entries(muscleMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const recent = getLastSessions(4);
+
+  const chartSvg = `
+    <svg viewBox="0 0 960 360" preserveAspectRatio="none" role="img" aria-label="Volume par groupe musculaire">
+      <defs>
+        <linearGradient id="g1" x1="0" x2="1">
+          <stop offset="0%" stop-color="#0A84FF"/>
+          <stop offset="55%" stop-color="#7C5CFF"/>
+          <stop offset="100%" stop-color="#10B981"/>
+        </linearGradient>
+      </defs>
+      ${load.map((d, i) => {
+        const x = 80 + i * 100;
+        const h = 240 * d[1] / maxMuscle;
+        const y = 280 - h;
+        return `
+          <rect x="${x}" y="${y}" width="58" height="${h}" rx="18" fill="url(#g1)"></rect>
+          <text x="${x+29}" y="320" text-anchor="middle" font-size="18" fill="currentColor" font-family="var(--sans)">${escapeHtml(d[0])}</text>
+          <text x="${x+29}" y="${Math.max(52, y-10)}" text-anchor="middle" font-size="18" fill="currentColor" font-family="var(--mono)" font-weight="900">${d[1]}</text>
+        `;
+      }).join('')}
+    </svg>
+  `;
+  const series = recent.map(s => s.totalSets || 0);
+  const linePoints = series.length
+    ? series.map((v, i) => {
+        const x = 40 + (i * 260 / Math.max(series.length-1, 1));
+        const y = 140 - (v / Math.max(...series, 1)) * 90;
+        return `${x},${y}`;
+      }).join(' ')
+    : '';
+  const lineSvg = `
+    <svg viewBox="0 0 300 160" preserveAspectRatio="none">
+      <defs><linearGradient id="lg" x1="0" x2="1"><stop offset="0%" stop-color="#0A84FF"/><stop offset="100%" stop-color="#7C5CFF"/></linearGradient></defs>
+      <polyline fill="none" stroke="url(#lg)" stroke-width="5" points="${linePoints}"></polyline>
+      ${series.map((v, i) => {
+        const x = 40 + (i * 260 / Math.max(series.length-1,1));
+        const y = 140 - (v / Math.max(...series, 1)) * 90;
+        return `<circle cx="${x}" cy="${y}" r="5" fill="#0A84FF"></circle>`;
+      }).join('')}
+    </svg>
+  `;
+  document.getElementById('analysis').innerHTML = `
+    <div class="analysis-hero">
+      <div class="chart">
+        <div class="chart-title">Volume par groupe musculaire</div>
+        <div class="chart-sub">Séries cumulées dans tes séances passées et tes brouillons.</div>
+        ${chartSvg}
+      </div>
+      <div class="stack">
+        <div class="card">
+          <div class="section-title">État global</div>
+          <div class="grid-2">
+            <div class="mini-card"><h4>${weekDone}/5</h4><p>Séances cette semaine</p></div>
+            <div class="mini-card"><h4>${streak}</h4><p>Semaines consécutives solides</p></div>
+            <div class="mini-card"><h4>${Math.round(profileScore)}%</h4><p>Profil complété</p></div>
+            <div class="mini-card"><h4>${avgSleep}</h4><p>Sommeil cible</p></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">Dernière séance</div>
+          ${last ? `
+            <div class="notice">
+              <strong>${escapeHtml(last.name)}</strong><br>
+              ${fmtDate(last.date)} • ${last.exerciseCount} exercices • ${last.totalSets} séries • volume ${Math.round(last.volume)}
+            </div>` : `<div class="empty">Aucune séance archivée.</div>`}
+        </div>
+      </div>
+    </div>
+
+    <div class="analysis-hero">
+      <div class="chart">
+        <div class="chart-title">Évolution récente des séries</div>
+        <div class="chart-sub">Vue simple des 4 dernières séances archivées.</div>
+        ${lineSvg}
+      </div>
+      <div class="card">
+        <div class="section-title">Lecture rapide</div>
+        <div class="tableish">
+          ${Object.entries(muscleMap).sort((a,b)=>b[1]-a[1]).map(([k,v]) => `
+            <div class="bar-row">
+              <div class="label">${escapeHtml(k)}</div>
+              <div class="progress"><i style="width:${Math.max(8, Math.round(v / maxMuscle * 100))}%"></i></div>
+              <div class="value">${v}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+function renderNutrition(){
+  document.getElementById('nutrition').innerHTML = `
+    <div class="grid-2">
+      <div class="card">
+        <div class="section-title">Nutrition minimaliste</div>
+        <div class="section-sub">Un cadre simple pour rester stable, fort et propre visuellement.</div>
+        <div class="stack">
+          <div class="mini-card"><h4>Protéines</h4><p>≈ 1,6 à 2,2 g/kg/j sur 3 à 4 prises selon ton niveau d'appétit et l'intensité.</p></div>
+          <div class="mini-card"><h4>Glucides autour des séances</h4><p>Priorité aux glucides avant et après l'entraînement pour soutenir le volume et la récupération.</p></div>
+          <div class="mini-card"><h4>Lipides utiles</h4><p>Huile d'olive, œufs, oléagineux, poissons gras, sans tomber dans l'excès.</p></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Règles simples</div>
+        <div class="grid-2">
+          <div class="mini-card"><h4>Hydratation</h4><p>Boire régulièrement sur la journée et pendant les séances.</p></div>
+          <div class="mini-card"><h4>Poids</h4><p>Suivre la moyenne hebdo plutôt que le chiffre d'un jour.</p></div>
+          <div class="mini-card"><h4>Timing</h4><p>Repas plus riches en glucides autour de l'entraînement.</p></div>
+          <div class="mini-card"><h4>Récup</h4><p>Le sommeil reste le vrai multiplicateur de progrès.</p></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+function renderProfile(){
+  const p = state.profile || {};
+  document.getElementById('profile').innerHTML = `
+    <div class="card">
+      <div class="section-title">Morphologie</div>
+      <div class="section-sub">Cortex exploite ces données pour contextualiser tes réponses et tes analyses.</div>
+      <div class="profile-form">
+        ${Object.entries({
+          height:'Taille', weight:'Poids', bodyFat:'Masse grasse', ageBone:'Âge osseux',
+          sleep:'Sommeil', split:'Split', mobility:'Mobilité', objective:'Objectif'
+        }).map(([key,label]) => `
+          <div class="field">
+            <label>${label}</label>
+            <input data-profile="${key}" value="${escapeHtml(p[key] || '')}">
+          </div>
+        `).join('')}
+        <div class="field" style="grid-column:1/-1">
+          <label>Notes libres</label>
+          <textarea data-profile="notes">${escapeHtml(p.notes || '')}</textarea>
+        </div>
+      </div>
+      <div class="toolbar" style="margin-top:12px">
+        <button class="primary-btn" data-action="save-profile">Enregistrer le profil</button>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:12px">
+      <div class="card">
+        <div class="section-title">Semaine type</div>
+        <div class="grid-2">
+          ${[1,2,3,4,5,6,0].map(d => {
+            const s = WEEK_TEMPLATE[d];
+            const bg = {mon:'rgba(10,132,255,.10)', tue:'rgba(124,92,255,.10)', wed:'rgba(160,168,182,.10)', thu:'rgba(255,107,157,.10)', fri:'rgba(16,185,129,.10)', sat:'rgba(245,158,11,.10)', sun:'rgba(160,168,182,.10)'}[s.color];
+            return `<div class="mini-card" style="background:${bg}">
+              <h4>${DAY_NAMES[d]}</h4><p>${escapeHtml(s.name)}</p>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Lecture morphologique</div>
+        <div class="grid-2">
+          <div class="mini-card"><h4>Structure</h4><p>${escapeHtml(p.split || '')}</p></div>
+          <div class="mini-card"><h4>Objectif</h4><p>${escapeHtml(p.objective || '')}</p></div>
+          <div class="mini-card"><h4>Mobilité</h4><p>${escapeHtml(p.mobility || '')}</p></div>
+          <div class="mini-card"><h4>Sommeil</h4><p>${escapeHtml(p.sleep || '')}</p></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+function renderData(){
+  document.getElementById('data').innerHTML = `
+    <div class="grid-2">
+      <div class="card">
+        <div class="section-title">Exporter</div>
+        <div class="section-sub">Séances archivée + brouillons en CSV.</div>
+        <div class="toolbar">
+          <button class="primary-btn" data-action="export-csv">Télécharger CSV</button>
+          <button class="secondary-btn" data-action="export-json">Télécharger JSON</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Importer</div>
+        <div class="section-sub">Colle un CSV compatible pour récupérer tes séances.</div>
+        <textarea id="csvInput" class="csv" placeholder="date;status;weekday;session_name;session_type;color;exercise_index;exercise_name;set_index;reps;weight;done;rest_seconds"></textarea>
+        <div class="toolbar" style="margin-top:10px">
+          <button class="primary-btn" data-action="import-csv">Importer CSV</button>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <div class="section-title" style="color:var(--danger)">Danger zone</div>
+      <div class="section-sub">Ces actions touchent aux données locales du navigateur.</div>
+      <div class="toolbar">
+        <button class="danger-btn" data-action="clear-all">Effacer toutes les données locales</button>
+      </div>
+    </div>
+  `;
+}
+function renderAll(){
+  applyTheme();
+  renderHome();
+  renderProgram();
+  renderCortex();
+  renderAnalysis();
+  renderNutrition();
+  renderProfile();
+  renderData();
+  refreshSessionUI();
+  bindProfileInputs();
+  bindCortexComposer();
+  bindTabs();
+  maybeScrollActiveDay();
+}
+function refreshSessionUI(){
+  const el = document.querySelector('.day-strip');
+  if(el) el.innerHTML = renderTabs();
+}
+function bindTabs(){
+  document.querySelectorAll('.tab').forEach(btn => {
+    if(btn._bound) return;
+    btn.addEventListener('click', () => showTab(btn.dataset.tab));
+    btn._bound = true;
+  });
+}
+function showTab(name){
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === name));
+  if(name === 'cortex') setTimeout(() => { const i = document.getElementById('cortexInput'); if(i) i.focus(); }, 50);
+  if(name === 'program') maybeScrollActiveDay();
+}
+function maybeScrollActiveDay(){
+  const active = document.querySelector('.day.active');
+  if(active) active.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+}
+function bindProfileInputs(){
+  document.querySelectorAll('[data-profile]').forEach(el => {
+    if(el._bound) return;
+    el.addEventListener('input', () => {
+      state.profile[el.dataset.profile] = el.value;
+      save();
+    });
+    el._bound = true;
+  });
+}
+function bindCortexComposer(){
+  const input = document.getElementById('cortexInput');
+  const btn = document.getElementById('sendCortexBtn');
+  if(input && !input._bound){
+    input.addEventListener('keydown', e => {
+      if((e.ctrlKey || e.metaKey) && e.key === 'Enter'){
+        e.preventDefault(); sendCortex();
+      }
+    });
+    input._bound = true;
+  }
+  if(btn && !btn._bound){
+    btn.addEventListener('click', sendCortex);
+    btn._bound = true;
+  }
+}
+function addCortexMessage(role, content){
+  state.cortexMessages.push({role, content});
+  const max = 30;
+  if(state.cortexMessages.length > max) state.cortexMessages = state.cortexMessages.slice(-max);
+  save();
+}
+function scrollChatBottom(){
+  const body = document.getElementById('chatBody');
+  if(body) body.scrollTop = body.scrollHeight;
+}
+async function sendCortex(textOverride){
+  const input = document.getElementById('cortexInput');
+  const text = String(textOverride ?? input?.value ?? '').trim();
+  if(!text) return;
+  addCortexMessage('user', text);
+  renderCortex();
+  scrollChatBottom();
+  if(input) input.value = '';
+  addCortexMessage('assistant', '…');
+  renderCortex();
+  scrollChatBottom();
+  const spinnerIndex = state.cortexMessages.length - 1;
+  try{
+    const answer = await askCortex(text);
+    state.cortexMessages[spinnerIndex] = {role:'assistant', content: answer || localCoachReply(text)};
+  }catch(e){
+    state.cortexMessages[spinnerIndex] = {role:'assistant', content: localCoachReply(text)};
+  }
+  save();
+  renderCortex();
+  scrollChatBottom();
+}
+function csvEscape(v){
+  const s = String(v ?? '');
+  return /[;"\n,]/.test(s) ? `"${s.replaceAll('"','""')}"` : s;
+}
+function exportCSV(){
+  const header = ['date','status','weekday','session_name','session_type','color','exercise_index','exercise_name','set_index','reps','weight','done','rest_seconds'];
+  const rows = [header.join(';')];
+  const items = [
+    ...Object.entries(state.logs).map(([date, session]) => ({date, status:'logged', session})),
+    ...Object.entries(state.drafts).map(([date, session]) => ({date, status:'draft', session}))
+  ].sort((a,b) => a.date.localeCompare(b.date));
+  for(const item of items){
+    const session = item.session;
+    if(!session || session.type !== 'train') continue;
+    const weekday = DAY_NAMES[fromISO(item.date).getDay()];
+    session.exercises.forEach((ex, exIndex) => ex.sets.forEach((set, setIndex) => {
+      rows.push([
+        csvEscape(item.date), csvEscape(item.status), csvEscape(weekday), csvEscape(session.name), csvEscape(session.type), csvEscape(session.color),
+        csvEscape(exIndex), csvEscape(ex.name), csvEscape(setIndex+1), csvEscape(set.reps ?? ''), csvEscape(set.weight ?? ''), csvEscape(set.done ? 1 : 0), csvEscape(ex.rest ?? 90)
+      ].join(';'));
+    }));
+  }
+  return '\ufeff' + rows.join('\n');
+}
+function exportJSON(){
+  return JSON.stringify({
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    state
+  }, null, 2);
+}
+function downloadBlob(content, type, filename){
+  const blob = new Blob([content], {type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 800);
+}
+function parseCsvLine(line, sep){
+  const out=[]; let cur=''; let q=false;
+  for(let i=0;i<line.length;i++){
+    const ch = line[i];
+    if(q){
+      if(ch === '"'){
+        if(line[i+1] === '"'){ cur += '"'; i++; }
+        else q = false;
+      }else cur += ch;
+    }else{
+      if(ch === '"') q = true;
+      else if(ch === sep){ out.push(cur); cur=''; }
+      else cur += ch;
+    }
+  }
+  out.push(cur);
+  return out;
+}
+function parseCSV(text){
+  const cleaned = String(text || '').replace(/\r/g,'').trim();
+  if(!cleaned) return [];
+  const lines = cleaned.split('\n').filter(Boolean);
+  const sep = (lines[0].match(/;/g)||[]).length >= (lines[0].match(/,/g)||[]).length ? ';' : ',';
+  const headers = parseCsvLine(lines[0], sep).map(h => h.trim().toLowerCase());
+  return lines.slice(1).map(line => {
+    const cols = parseCsvLine(line, sep);
+    const row = {};
+    headers.forEach((h,i)=>row[h]=cols[i] ?? '');
+    return row;
+  });
+}
+function importCSV(text){
+  const rows = parseCSV(text);
+  if(!rows.length) return alert('CSV vide ou illisible.');
+  const grouped = {};
+  for(const row of rows){
+    const date = row.date || row.jour || row.day;
+    if(!date) continue;
+    if(!grouped[date]){
+      const template = defaultSession(date);
+      grouped[date] = {status: (row.status || 'draft').toLowerCase().includes('log') ? 'logged' : 'draft', session: normalizeSession({
+        type: row.session_type || template.type,
+        name: row.session_name || template.name,
+        color: row.color || template.color,
+        note: row.note || template.note || '',
+        exercises:[]
+      }, date), exercises:{}};
+    }
+    const g = grouped[date];
+    if((row.status || '').toLowerCase().includes('log')) g.status = 'logged';
+    const exIndex = Number(row.exercise_index || 0);
+    if(!g.exercises[exIndex]){
+      g.exercises[exIndex] = normalizeExercise({
+        name: row.exercise_name || 'Exercice',
+        rest: Number(row.rest_seconds || 90),
+        sets:[]
+      });
+    }
+    g.exercises[exIndex].name = row.exercise_name || g.exercises[exIndex].name;
+    g.exercises[exIndex].rest = Number(row.rest_seconds || g.exercises[exIndex].rest || 90);
+    const setIndex = Math.max(0, Number(row.set_index || 1) - 1);
+    g.exercises[exIndex].sets[setIndex] = {
+      reps: row.reps === '' ? '' : Number(row.reps || 0),
+      weight: row.weight === '' ? '' : Number(row.weight || 0),
+      done: String(row.done || '0') === '1'
+    };
+  }
+  Object.entries(grouped).forEach(([date, entry]) => {
+    const session = entry.session;
+    session.exercises = Object.values(entry.exercises).map(normalizeExercise);
+    if(entry.status === 'logged') state.logs[date] = session;
+    else state.drafts[date] = session;
+  });
+  save(); renderAll();
+}
+function clearAll(){
+  if(!confirm('Effacer toutes les données locales de TITAN OS ?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+}
+function saveProfile(){
+  save(); alert('Profil enregistré.');
+}
+function duplicateDay(dateStr){
+  const source = getSessionRecord(dateStr).data;
+  const next = toISODate(new Date(fromISO(dateStr).getTime() + 24*60*60*1000));
+  state.drafts[next] = deepClone(normalizeSession(source, next));
+  state.selectedDate = next;
+  save(); renderAll(); showTab('program');
+}
+function commitSession(dateStr){
+  const draft = ensureDraft(dateStr);
+  state.logs[dateStr] = normalizeSession(draft, dateStr);
+  delete state.drafts[dateStr];
+  save(); renderAll();
+}
+function unlockSession(dateStr){
+  if(state.logs[dateStr]){
+    state.drafts[dateStr] = deepClone(state.logs[dateStr]);
+    delete state.logs[dateStr];
+    save(); renderAll();
+  }
+}
+function saveDraft(dateStr){
+  ensureDraft(dateStr); save(); renderAll();
+}
+function addExercise(dateStr){
+  mutateDraft(dateStr, draft => {
+    draft.exercises = Array.isArray(draft.exercises) ? draft.exercises : [];
+    draft.exercises.push(normalizeExercise({name:'Nouvel exercice', rest:90, sets:[{reps:10, weight:0, done:false}]}));
+  });
+}
+function deleteExercise(dateStr, exIndex){
+  mutateDraft(dateStr, draft => draft.exercises.splice(exIndex, 1));
+}
+function addSet(dateStr, exIndex){
+  mutateDraft(dateStr, draft => {
+    const ex = draft.exercises?.[exIndex];
+    if(!ex) return;
+    const last = ex.sets[ex.sets.length-1] || {reps:10, weight:0, done:false};
+    ex.sets.push({reps:last.reps ?? 10, weight:last.weight ?? 0, done:false});
+  });
+}
+function removeSet(dateStr, exIndex){
+  mutateDraft(dateStr, draft => {
+    const ex = draft.exercises?.[exIndex];
+    if(!ex) return;
+    if(ex.sets.length > 1) ex.sets.pop();
+  });
+}
+function toggleSet(dateStr, exIndex, setIndex){
+  mutateDraft(dateStr, draft => {
+    const set = draft.exercises?.[exIndex]?.sets?.[setIndex];
+    if(set) set.done = !set.done;
+  });
+}
+function updateExerciseName(dateStr, exIndex, value){
+  mutateDraft(dateStr, draft => {
+    if(draft.exercises?.[exIndex]) draft.exercises[exIndex].name = value || 'Nouvel exercice';
+  });
+}
+function updateSetField(dateStr, exIndex, setIndex, field, value){
+  mutateDraft(dateStr, draft => {
+    const set = draft.exercises?.[exIndex]?.sets?.[setIndex];
+    if(!set) return;
+    if(field === 'reps') set.reps = value === '' ? '' : Number(value);
+    if(field === 'weight') set.weight = value === '' ? '' : Number(value);
+  });
+}
+let timerHandle = null;
+function startTimer(seconds, name){
+  const overlay = document.getElementById('timerOverlay');
+  const timerName = document.getElementById('timerName');
+  const timerSub = document.getElementById('timerSub');
+  const timerCount = document.getElementById('timerCount');
+  const timerFill = document.getElementById('timerFill');
+  clearInterval(timerHandle);
+  let remaining = Math.max(0, Number(seconds) || 0);
+  const total = remaining;
+  timerName.textContent = name || 'Repos';
+  timerSub.textContent = 'Temps de repos';
+  overlay.classList.add('show');
+  overlay.setAttribute('aria-hidden','false');
+  const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+  timerCount.textContent = fmt(remaining);
+  timerFill.style.width = '0%';
+  timerHandle = setInterval(() => {
+    remaining -= 1;
+    if(remaining < 0) remaining = 0;
+    timerCount.textContent = fmt(remaining);
+    timerFill.style.width = `${total ? Math.min(100, ((total - remaining)/total)*100) : 100}%`;
+    if(remaining <= 0){
+      clearInterval(timerHandle);
+      timerSub.textContent = 'Repos terminé';
+    }
+  }, 1000);
+}
+function closeTimer(){
+  clearInterval(timerHandle);
+  document.getElementById('timerOverlay').classList.remove('show');
+  document.getElementById('timerOverlay').setAttribute('aria-hidden', 'true');
+}
+function openSettings(){
+  document.getElementById('providerSelect').value = state.provider;
+  document.getElementById('groqModelSelect').value = state.groqModel;
+  document.getElementById('groqKeyInput').value = state.groqKey || '';
+  document.getElementById('geminiModelSelect').value = state.geminiModel;
+  document.getElementById('geminiKeyInput').value = state.geminiKey || '';
+  document.getElementById('languageSelect').value = state.language;
+  document.getElementById('toneSelect').value = state.tone;
+  document.getElementById('timeoutInput').value = state.timeout || 45;
+  document.getElementById('settingsModal').classList.add('show');
+}
+function closeSettings(){
+  document.getElementById('settingsModal').classList.remove('show');
+}
+function saveSettingsFromModal(){
+  state.provider = document.getElementById('providerSelect').value;
+  state.groqModel = document.getElementById('groqModelSelect').value;
+  state.groqKey = document.getElementById('groqKeyInput').value.trim();
+  state.geminiModel = document.getElementById('geminiModelSelect').value;
+  state.geminiKey = document.getElementById('geminiKeyInput').value.trim();
+  state.language = document.getElementById('languageSelect').value;
+  state.tone = document.getElementById('toneSelect').value;
+  state.timeout = Number(document.getElementById('timeoutInput').value || 45);
+  save();
+  closeSettings();
+  renderAll();
+}
+function resetKeys(){
+  state.groqKey = '';
+  state.geminiKey = '';
+  save();
+  openSettings();
+}
+function flash(message){
+  let el = document.getElementById('flash');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'flash';
+    el.style.position = 'fixed';
+    el.style.left = '50%';
+    el.style.bottom = '18px';
+    el.style.transform = 'translateX(-50%)';
+    el.style.zIndex = '300';
+    el.style.padding = '11px 14px';
+    el.style.borderRadius = '999px';
+    el.style.background = 'rgba(17,19,21,.94)';
+    el.style.color = '#fff';
+    el.style.boxShadow = '0 12px 30px rgba(0,0,0,.22)';
+    el.style.fontSize = '.84rem';
+    el.style.fontWeight = '900';
+    document.body.appendChild(el);
+  }
+  el.textContent = message;
+  el.style.opacity = '1';
+  clearTimeout(flash._t);
+  flash._t = setTimeout(() => { el.style.opacity = '0'; }, 1400);
+}
+function bindEvents(){
+  document.getElementById('themeBtn').onclick = () => setTheme(state.theme === 'dark' ? 'light' : 'dark');
+  document.getElementById('openSettingsBtn').onclick = openSettings;
+  document.getElementById('closeSettingsBtn').onclick = closeSettings;
+  document.getElementById('saveSettingsBtn').onclick = saveSettingsFromModal;
+  document.getElementById('resetKeysBtn').onclick = resetKeys;
+  document.getElementById('saveSettingsBtn').onclick = saveSettingsFromModal;
+  document.getElementById('closeTimerBtn').onclick = closeTimer;
+
+  document.getElementById('settingsModal').addEventListener('click', e => {
+    if(e.target.id === 'settingsModal') closeSettings();
+  });
+
+  document.addEventListener('click', async e => {
+    const tab = e.target.closest('.tab');
+    if(tab){
+      showTab(tab.dataset.tab);
+      return;
+    }
+    const chip = e.target.closest('[data-jump]');
+    if(chip){
+      showTab(chip.dataset.jump);
+      return;
+    }
+    const dateEl = e.target.closest('[data-date]');
+    if(dateEl && dateEl.classList.contains('day')){
+      state.selectedDate = dateEl.dataset.date;
+      save(); renderProgram(); maybeScrollActiveDay();
+      return;
+    }
+    const actionEl = e.target.closest('[data-action]');
+    if(!actionEl) return;
+    const action = actionEl.dataset.action;
+    const date = actionEl.dataset.date || state.selectedDate;
+    const ex = Number(actionEl.dataset.ex || 0);
+    const set = Number(actionEl.dataset.set || 0);
+
+    if(action === 'add-ex') return addExercise(date);
+    if(action === 'delete-ex') return deleteExercise(date, ex);
+    if(action === 'add-set') return addSet(date, ex);
+    if(action === 'remove-set') return removeSet(date, ex);
+    if(action === 'toggle-set') return toggleSet(date, ex, set);
+    if(action === 'commit-session') return commitSession(date);
+    if(action === 'unlock-session') return unlockSession(date);
+    if(action === 'save-draft') return saveDraft(date);
+    if(action === 'duplicate-day') return duplicateDay(date);
+    if(action === 'start-timer') return startTimer(Number(actionEl.dataset.rest || 90), actionEl.dataset.name || 'Repos');
+    if(action === 'clear-chat') { state.cortexMessages = [{role:'assistant', content:'Cortex prêt.'}]; save(); renderCortex(); return; }
+    if(action === 'insert-summary'){ return sendCortex(buildQuickSummary()); }
+    if(action === 'open-settings-from-cortex'){ return openSettings(); }
+    if(action === 'save-profile'){ return saveProfile(); }
+    if(action === 'export-csv'){ downloadBlob(exportCSV(), 'text/csv;charset=utf-8;', `titan_os_${todayISO()}.csv`); return; }
+    if(action === 'export-json'){ downloadBlob(exportJSON(), 'application/json;charset=utf-8;', `titan_os_${todayISO()}.json`); return; }
+    if(action === 'import-csv'){ importCSV(document.getElementById('csvInput').value); flash('CSV importé.'); return; }
+    if(action === 'clear-all'){ return clearAll(); }
+  });
+
+  document.addEventListener('input', e => {
+    const t = e.target;
+    if(t.matches('[data-action="exercise-name"]')){
+      updateExerciseName(t.dataset.date, Number(t.dataset.ex), t.value);
+      return;
+    }
+    if(t.matches('[data-action="set-field"]')){
+      updateSetField(t.dataset.date, Number(t.dataset.ex), Number(t.dataset.set), t.dataset.field, t.value);
+      return;
+    }
+    if(t.matches('[data-profile]')){
+      state.profile[t.dataset.profile] = t.value;
+      save();
+    }
+  });
+
+  document.addEventListener('focusout', e => {
+    const t = e.target;
+    if(t.matches('[data-action="exercise-name"], [data-action="set-field"], [data-profile]')){
+      renderAll();
+    }
+  });
+
+  document.addEventListener('click', e => {
+    const suggest = e.target.closest('[data-suggest]');
+    if(suggest){
+      const input = document.getElementById('cortexInput');
+      if(input) input.value = suggest.dataset.suggest;
+    }
+  });
+}
+
+function isFiniteNumber(v){
+  return v !== '' && v !== null && v !== undefined && Number.isFinite(Number(v));
+}
+function isExerciseReady(ex){
+  return Array.isArray(ex?.sets) && ex.sets.length > 0 && ex.sets.every(s => isFiniteNumber(s.reps) && Number(s.reps) > 0 && isFiniteNumber(s.weight));
+}
+function isExerciseValidated(ex){
+  return !!ex?.validated && isExerciseReady(ex) && ex.sets.every(s => !!s.done);
+}
+function refreshExerciseValidation(ex){
+  ex.validated = isExerciseReady(ex) && ex.sets.every(s => !!s.done);
+  return ex.validated;
+}
+function normalizeExercise(ex){
+  const clean = deepClone(ex || {});
+  clean.name = String(clean.name || 'Nouvel exercice');
+  clean.rest = Number(clean.rest ?? 90);
+  clean.sets = Array.isArray(clean.sets) && clean.sets.length ? clean.sets : [{reps:10, weight:0, done:false}];
+  clean.sets = clean.sets.map(s => ({
+    reps: s.reps === '' || s.reps === null || s.reps === undefined ? '' : Number(s.reps),
+    weight: s.weight === '' || s.weight === null || s.weight === undefined ? '' : Number(s.weight),
+    done: !!s.done
+  }));
+  clean.validated = isExerciseReady(clean) && clean.sets.every(s => !!s.done) ? !!clean.validated : false;
+  return clean;
+}
+function addExercise(dateStr){
+  mutateDraft(dateStr, draft => {
+    draft.exercises = Array.isArray(draft.exercises) ? draft.exercises : [];
+    draft.exercises.push(normalizeExercise({
+      name:'Nouvel exercice',
+      rest:90,
+      sets:[{reps:10, weight:0, done:false}],
+      validated:false
+    }));
+  });
+}
+function deleteExercise(dateStr, exIndex){
+  mutateDraft(dateStr, draft => {
+    draft.exercises.splice(exIndex, 1);
+  });
+}
+function addSet(dateStr, exIndex){
+  mutateDraft(dateStr, draft => {
+    const ex = draft.exercises[exIndex];
+    if(!ex) return;
+    const last = ex.sets[ex.sets.length - 1] || {reps:10, weight:0, done:false};
+    ex.sets.push({reps:last.reps ?? 10, weight:last.weight ?? 0, done:false});
+    ex.validated = false;
+  });
+}
+function removeSet(dateStr, exIndex){
+  mutateDraft(dateStr, draft => {
+    const ex = draft.exercises[exIndex];
+    if(!ex) return;
+    if(ex.sets.length > 1){
+      ex.sets.pop();
+      ex.validated = false;
+    }
+  });
+}
+function toggleSet(dateStr, exIndex, setIndex){
+  mutateDraft(dateStr, draft => {
+    const set = draft.exercises?.[exIndex]?.sets?.[setIndex];
+    if(set){
+      set.done = !set.done;
+      refreshExerciseValidation(draft.exercises[exIndex]);
+    }
+  });
+}
+function updateExerciseName(dateStr, exIndex, value){
+  const draft = ensureDraft(dateStr);
+  if(!draft.exercises?.[exIndex]) return;
+  draft.exercises[exIndex].name = value || 'Nouvel exercice';
+  state.drafts[dateStr] = normalizeSession(draft, dateStr);
+  save();
+}
+function updateSetField(dateStr, exIndex, setIndex, field, value){
+  const draft = ensureDraft(dateStr);
+  const ex = draft.exercises?.[exIndex];
+  const set = ex?.sets?.[setIndex];
+  if(!set || !ex) return;
+  if(field === 'reps') set.reps = value === '' ? '' : Number(value);
+  if(field === 'weight') set.weight = value === '' ? '' : Number(value);
+  ex.validated = false;
+  state.drafts[dateStr] = normalizeSession(draft, dateStr);
+  save();
+}
+function commitSession(dateStr){
+  const draft = ensureDraft(dateStr);
+  if(draft.type === 'train'){
+    const invalid = (draft.exercises || []).filter(ex => !isExerciseValidated(normalizeExercise(ex)));
+    if(invalid.length){
+      flashStatus('Valide les exercices avant d’archiver.');
+      return;
+    }
+  }
+  state.logs[dateStr] = normalizeSession(draft, dateStr);
+  delete state.drafts[dateStr];
+  saveState();
+  renderAll();
+  flashStatus('Séance archivée.');
+}
+function unlockSession(dateStr){
+  if(state.logs[dateStr]){
+    state.drafts[dateStr] = deepClone(state.logs[dateStr]);
+    delete state.logs[dateStr];
+    saveState();
+    renderAll();
+    flashStatus('Séance déverrouillée.');
+  }
+}
+function saveDraft(dateStr){
+  ensureDraft(dateStr);
+  saveState();
+  renderAll();
+  flashStatus('Brouillon sauvegardé.');
+}
+function renderProgram(){
+  const rec = getSessionRecord(state.selectedDate);
+  const session = rec.data;
+  const locked = rec.source === 'logged';
+  const totals = workoutTotals(session);
+  const today = todayISO();
+  const validatedCount = session.type === 'train' ? session.exercises.filter(isExerciseValidated).length : 0;
+  const completionRate = session.type === 'train' && session.exercises.length ? Math.round((validatedCount / session.exercises.length) * 100) : 100;
+  let sessionHtml = '';
+  if(session.type === 'rest'){
+    sessionHtml = `<div class="empty" style="margin-top:12px">${escapeHtml(session.note || 'Repos.')}</div>`;
+  } else {
+    sessionHtml = `<div class="session-card">
+      <div class="session-head">
+        <div>
+          <div class="hero-tag">${state.selectedDate === today ? 'AUJOURD’HUI' : fmtDate(state.selectedDate)} • ${locked ? 'ARCHIVÉE' : (rec.source === 'draft' ? 'BROUILLON' : 'MODÈLE')}</div>
+          <div class="name">${escapeHtml(session.name)}</div>
+          <div class="meta">${totals.exerciseCount} exercices • ${totals.totalSets} séries • ${Math.max(0, Math.round(totals.rest/60))} min de repos • ${validatedCount}/${session.exercises.length} validés</div>
+        </div>
+        <div class="session-actions">
+          <span class="chip good">${completionRate}% validé</span>
+          <button class="small-btn" data-action="duplicate-day" data-date="${state.selectedDate}">Dupliquer</button>
+          <button class="small-btn" data-action="save-draft" data-date="${state.selectedDate}">Brouillon</button>
+          ${locked ? `<button class="small-btn" data-action="unlock-session" data-date="${state.selectedDate}">Déverrouiller</button>` : `<button class="primary-btn" data-action="commit-session" data-date="${state.selectedDate}">Archiver</button>`}
+        </div>
+      </div>
+      <div class="ex-list">
+        ${session.exercises.length ? session.exercises.map((ex, exIndex) => {
+          const normalized = normalizeExercise(ex);
+          const ready = isExerciseValidated(normalized);
+          const canValidate = isExerciseReady(normalized) && normalized.sets.every(s => !!s.done);
+          const statusLabel = locked ? 'Verrouillé' : (ready ? 'Validé' : canValidate ? 'Prêt à valider' : 'À compléter');
+          const badgeClass = locked ? 'locked' : (ready ? 'ready' : 'pending');
+          return `<div class="exercise">
+            <div class="exercise-top">
+              <input class="exercise-name" value="${escapeHtml(normalized.name)}" data-action="exercise-name" data-date="${state.selectedDate}" data-ex="${exIndex}" ${locked ? 'readonly' : ''} placeholder="Nom de l'exercice" autocomplete="off" spellcheck="false">
+              <div class="exercise-meta">
+                <span class="exercise-badge ${badgeClass}">${statusLabel}</span>
+                ${!locked ? `<button class="timer-btn" data-action="start-timer" data-rest="${Number(normalized.rest || 90)}" data-name="${escapeHtml(normalized.name)}">⏱ ${Number(normalized.rest || 90)}s</button>` : ''}
+                ${!locked ? `<button class="trash-btn" data-action="delete-ex" data-date="${state.selectedDate}" data-ex="${exIndex}">✕</button>` : ''}
+              </div>
+              <div class="meta">${normalized.rest}s repos • ${normalized.sets.length} séries</div>
+            </div>
+            <div class="sets">
+              ${normalized.sets.map((set, setIndex) => {
+                const reps = set.reps ?? '';
+                const weight = set.weight ?? '';
+                return `<div class="set-row">
+                  <div class="set-index">${setIndex+1}</div>
+                  <input class="set-input" type="number" step="1" inputmode="numeric" value="${reps}"
+                    data-action="set-field" data-field="reps" data-date="${state.selectedDate}" data-ex="${exIndex}" data-set="${setIndex}" ${locked ? 'readonly' : ''} placeholder="Reps">
+                  <div class="unit">reps</div>
+                  <input class="set-input" type="number" step="0.5" inputmode="decimal" value="${weight}"
+                    data-action="set-field" data-field="weight" data-date="${state.selectedDate}" data-ex="${exIndex}" data-set="${setIndex}" ${locked ? 'readonly' : ''} placeholder="Kg">
+                  <div class="unit">kg</div>
+                  <button class="check ${set.done ? 'done' : ''}" data-action="toggle-set" data-date="${state.selectedDate}" data-ex="${exIndex}" data-set="${setIndex}" ${locked ? 'disabled' : ''}>✓</button>
+                </div>`;
+              }).join('')}
+            </div>
+            ${!locked ? `
+            <div class="toolbar" style="margin-top:12px;justify-content:space-between">
+              <button class="link-btn" data-action="add-set" data-date="${state.selectedDate}" data-ex="${exIndex}">+ Ajouter une série</button>
+              <button class="link-btn danger" data-action="remove-set" data-date="${state.selectedDate}" data-ex="${exIndex}">− Retirer la dernière</button>
+            </div>` : ''}
+          </div>`;
+        }).join('') : '<div class="empty">Aucun exercice dans cette séance.</div>'}
+      </div>
+      ${!locked ? `
+        <div class="toolbar" style="padding:0 0 2px">
+          <button class="secondary-btn" data-action="add-ex" data-date="${state.selectedDate}">+ Ajouter un exercice</button>
+        </div>` : ''}
+    </div>`;
+  }
+
+  document.getElementById('program').innerHTML = `
+    <div class="card">
+      <div class="section-title">Sélecteur de jour</div>
+      <div class="section-sub">Navigue entre les modèles, brouillons et séances archivées. La séance du jour reste éditable tant qu’elle n’est pas archivée.</div>
+      <div class="day-strip" id="dayStrip">${renderTabs()}</div>
+    </div>
+    ${sessionHtml}
+  `;
+}
+function renderData(){
+  document.getElementById('data').innerHTML = `
+    <div class="grid-2">
+      <div class="card">
+        <div class="section-title">Exporter toutes les données</div>
+        <div class="section-sub">Séances, brouillons, profil, messages Cortex et réglages API dans un seul CSV.</div>
+        <div class="toolbar">
+          <button class="primary-btn" data-action="export-csv">Télécharger CSV complet</button>
+          <button class="secondary-btn" data-action="export-json">Télécharger JSON</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Importer</div>
+        <div class="section-sub">Compatible avec l’ancien format et le nouveau format complet.</div>
+        <textarea id="csvInput" class="csv" placeholder="record_type;scope;date;status;weekday;session_name;session_type;color;exercise_index;exercise_name;set_index;reps;weight;done;validated;rest_seconds;key;value;role;content"></textarea>
+        <div class="toolbar" style="margin-top:10px">
+          <button class="primary-btn" data-action="import-csv">Importer CSV</button>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <div class="section-title" style="color:var(--danger)">Danger zone</div>
+      <div class="section-sub">Ces actions touchent aux données locales du navigateur.</div>
+      <div class="toolbar">
+        <button class="danger-btn" data-action="clear-all">Effacer toutes les données locales</button>
+      </div>
+    </div>
+  `;
+}
+function exportCSV(){
+  const header = ['record_type','scope','date','status','weekday','session_name','session_type','color','exercise_index','exercise_name','set_index','reps','weight','done','validated','rest_seconds','key','value','role','content'];
+  const rows = [header.join(';')];
+  rows.push([
+    'meta','app','','','','TITAN_OS','','','','','','','','','','','','','',''
+  ].join(';'));
+  const settings = [
+    ['provider', state.provider], ['groqModel', state.groqModel], ['geminiModel', state.geminiModel],
+    ['groqKey', state.groqKey || ''], ['geminiKey', state.geminiKey || ''], ['language', state.language],
+    ['tone', state.tone], ['timeout', String(state.timeout ?? 45)], ['theme', state.theme],
+  ];
+  settings.forEach(([key, value]) => {
+    rows.push(['setting','api','','','','','','','','','','','','','','',csvEscape(key),csvEscape(value),'',''].join(';'));
+  });
+  Object.entries(state.profile || {}).forEach(([key, value]) => {
+    rows.push(['profile','morphology','','','','','','','','','','','','','','',csvEscape(key),csvEscape(value),'',''].join(';'));
+  });
+  (state.cortexMessages || []).forEach((m, i) => {
+    rows.push(['cortex_message','chat','','','','','','','','','','','','','','',csvEscape(String(i)),'',csvEscape(m.role || ''),csvEscape(m.content || '')].join(';'));
+  });
+  const items = [
+    ...Object.entries(state.logs).map(([date, session]) => ({date, status:'logged', session})),
+    ...Object.entries(state.drafts).map(([date, session]) => ({date, status:'draft', session}))
+  ].sort((a,b) => a.date.localeCompare(b.date));
+  for(const item of items){
+    const session = item.session;
+    const weekday = DAY_NAMES[fromISO(item.date).getDay()];
+    if(!session) continue;
+    if(session.type !== 'train'){
+      rows.push(['session_rest','workout',csvEscape(item.date),csvEscape(item.status),csvEscape(weekday),csvEscape(session.name),csvEscape(session.type),csvEscape(session.color || ''),'','','','','','','',csvEscape(session.note || ''),'','',''].join(';'));
+      continue;
+    }
+    session.exercises.forEach((ex, exIndex) => {
+      const exNorm = normalizeExercise(ex);
+      rows.push(['exercise','workout',csvEscape(item.date),csvEscape(item.status),csvEscape(weekday),csvEscape(session.name),csvEscape(session.type),csvEscape(session.color || ''),csvEscape(exIndex),csvEscape(exNorm.name),'','','','',csvEscape(exNorm.validated ? 1 : 0),csvEscape(exNorm.rest ?? 90),'','','',''].join(';'));
+      exNorm.sets.forEach((set, setIndex) => {
+        rows.push(['session_set','workout',csvEscape(item.date),csvEscape(item.status),csvEscape(weekday),csvEscape(session.name),csvEscape(session.type),csvEscape(session.color || ''),csvEscape(exIndex),csvEscape(exNorm.name),csvEscape(setIndex+1),csvEscape(set.reps ?? ''),csvEscape(set.weight ?? ''),csvEscape(set.done ? 1 : 0),csvEscape(exNorm.validated ? 1 : 0),csvEscape(exNorm.rest ?? 90),'','','',''].join(';'));
+      });
+    });
+  }
+  return '\ufeff' + rows.join('\n');
+}
+function importCSV(text){
+  const rows = parseCSV(text);
+  if(!rows.length){
+    flashStatus('CSV vide ou illisible.');
+    return;
+  }
+  const grouped = {};
+  const newProfile = {...(state.profile || {})};
+  let importedMessages = [];
+  for(const row of rows){
+    const kind = String(row.record_type || row.kind || '').toLowerCase();
+    if(kind === 'setting'){
+      const key = row.key;
+      if(key) state[key] = row.value;
+      continue;
+    }
+    if(kind === 'profile'){
+      if(row.key) newProfile[row.key] = row.value;
+      continue;
+    }
+    if(kind === 'cortex_message'){
+      importedMessages.push({role: row.role || 'assistant', content: row.content || ''});
+      continue;
+    }
+    const date = row.date || row.jour || row.day;
+    if(!date) continue;
+    if(!grouped[date]){
+      const template = defaultSession(date);
+      grouped[date] = {status: (row.status || 'draft').toLowerCase().includes('log') ? 'logged' : 'draft', session: normalizeSession({type: row.session_type || template.type, name: row.session_name || template.name, color: row.color || template.color, note: row.note || template.note || '', exercises: []}, date), exercises:{}};
+    }
+    const g = grouped[date];
+    if((row.status || '').toLowerCase().includes('log')) g.status = 'logged';
+    if(String(row.record_type || '').toLowerCase() === 'session_rest'){
+      g.session.type = 'rest';
+      g.session.name = row.session_name || g.session.name;
+      g.session.note = row.content || row.value || row.note || g.session.note || '';
+      continue;
+    }
+    const exIndex = Number(row.exercise_index || 0);
+    if(!g.exercises[exIndex]){
+      g.exercises[exIndex] = normalizeExercise({name: row.exercise_name || 'Exercice', rest: Number(row.rest_seconds || 90), sets: [], validated: Number(row.validated || 0) === 1});
+    }
+    const ex = g.exercises[exIndex];
+    ex.name = row.exercise_name || ex.name;
+    ex.rest = Number(row.rest_seconds || ex.rest || 90);
+    const setIndex = Number(row.set_index || 1) - 1;
+    if(!ex.sets[setIndex]) ex.sets[setIndex] = {reps:'', weight:'', done:false};
+    if(row.reps !== undefined && row.reps !== '') ex.sets[setIndex].reps = row.reps === '' ? '' : Number(row.reps);
+    if(row.weight !== undefined && row.weight !== '') ex.sets[setIndex].weight = row.weight === '' ? '' : Number(row.weight);
+    if(row.done !== undefined && row.done !== '') ex.sets[setIndex].done = String(row.done) === '1' || String(row.done).toLowerCase() === 'true';
+    if(row.validated !== undefined && row.validated !== '') ex.validated = String(row.validated) === '1' || String(row.validated).toLowerCase() === 'true';
+  }
+  Object.entries(grouped).forEach(([date, g]) => {
+    if(Object.keys(g.exercises).length){
+      g.session.type = 'train';
+      g.session.exercises = Object.values(g.exercises).map(normalizeExercise);
+    }
+    if(g.status === 'logged') state.logs[date] = normalizeSession(g.session, date);
+    else state.drafts[date] = normalizeSession(g.session, date);
+  });
+  state.profile = {...PROFILE_FIELDS, ...newProfile};
+  if(importedMessages.length) state.cortexMessages = importedMessages;
+  save();
+  renderAll();
+  flashStatus('CSV importé.');
+}
+
+function buildQuickSummary(){
+  const weekDone = currentWeekDoneCount();
+  const streak = computeStreak();
+  const last = getLastSessions(1)[0];
+  const future = getUpcomingSessions(5).map(s => `${s.date}: ${s.name} (${s.exerciseCount} ex)`).join(' | ');
+  return `Résumé rapide:
+- Séances cette semaine: ${weekDone}/5
+- Semaines solides: ${streak}
+- Morphologie: ${JSON.stringify(state.profile)}
+- Dernière séance: ${last ? `${last.name} le ${last.date}, ${last.totalSets} séries, volume ${Math.round(last.volume)}` : 'aucune'}
+- Séances futures: ${future}`;
+}
+function initClock(){
+  const el = document.getElementById('liveClock');
+  const tick = () => {
+    const d = new Date();
+    el.innerHTML = `${d.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'})} • <strong style="color:var(--text)">${d.toLocaleTimeString('fr-FR')}</strong>`;
+  };
+  tick();
+  setInterval(tick, 1000);
+}
+load();
+initClock();
+bindEvents();
+renderAll();
+showTab('home');
+</script>
+</body>
+</html>
