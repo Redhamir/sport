@@ -272,8 +272,8 @@ function closeProfile(){$("profileModal").classList.remove("open")}
 function init(){
  renderLeagueChips();$("seasonInput").value=String(season);updateApiState(!!key());chooseTabForLeague();
  if(key()){loadStandings();}else{go("standings")}
- const q=new URLSearchParams(location.search).get("league");if(q&&LEAGUES.some(l=>l.id===Number(q)))selected=Number(q);
- renderLeagueChips();
+ const params=new URLSearchParams(location.search);const q=params.get("league");if(q&&LEAGUES.some(l=>l.id===Number(q)))selected=Number(q);
+ renderLeagueChips();const teamId=Number(params.get("team"));if(teamId)setTimeout(()=>openClub(teamId),350);
 }
 init();
 </script>
