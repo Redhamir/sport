@@ -157,7 +157,7 @@ function saveKey(){
 function toggleKey(){const i=$("apiKey");i.type=i.type==="password"?"text":"password"}
 function removeKey(){localStorage.removeItem("lc-api-key");updateApiState(false);$("keyTest").textContent="Clé supprimée de cet appareil.";toast("Clé supprimée")}
 async function testKey(){
- try{const data=await api("/status",{},true);const acc=data.response?.account;const req=data.response?.requests;$("keyTest").textContent="Connecté"+(acc?.firstname?" · "+acc.firstname:"")+". "+(req?req.current+"/"+req.limit_day+" requêtes utilisées aujourd'hui.":"");updateApiState(true);updateQuotaFrom(data.headers);toast("API-Football connectée")}
+ try{const result=await api("/status",{},true);const data=result.data;updateQuotaFrom(result.headers);const acc=data.response?.account;const req=data.response?.requests;$("keyTest").textContent="Connecté"+(acc?.firstname?" · "+acc.firstname:"")+". "+(req?req.current+"/"+req.limit_day+" requêtes utilisées aujourd'hui.":"");updateApiState(true);updateQuotaFrom(data.headers);toast("API-Football connectée")}
  catch(e){$("keyTest").textContent="Connexion impossible : "+e.message;updateApiState(false)}
 }
 async function api(path,params={},isTest=false){
